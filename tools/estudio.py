@@ -73,6 +73,15 @@ class Handler(SimpleHTTPRequestHandler):
                 pass
             save_index(idx)
             return self._json(200, {'ok': True})
+        if url.path == '/api/raw':
+            # Cópia bruta (sem corte) só para diagnóstico; fica fora do git.
+            size = int(self.headers.get('Content-Length', 0))
+            raw_dir = os.path.join(AUDIO, '_raw')
+            os.makedirs(raw_dir, exist_ok=True)
+            ext = 'webm' if 'webm' in (self.headers.get('Content-Type') or '') else 'm4a'
+            with open(os.path.join(raw_dir, f'{clip}.{ext}'), 'wb') as f:
+                f.write(self.rfile.read(size))
+            return self._json(200, {'ok': True})
         if url.path != '/api/save':
             return self._json(404, {'error': 'rota desconhecida'})
         size = int(self.headers.get('Content-Length', 0))

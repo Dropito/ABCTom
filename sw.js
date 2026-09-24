@@ -1,5 +1,5 @@
 // Cache offline: tudo o que o app precisa fica no iPad.
-const V = 'abc-do-tom-v4';
+const V = 'abc-do-tom-v5';
 const FILES = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/data.js', 'js/art.js', 'js/audio.js', 'js/store.js', 'js/glyph.js', 'js/kz/engine.js', 'js/kz/objects1.js', 'js/kz/objects2.js', 'js/kz/icons.js',
   'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png'];
 

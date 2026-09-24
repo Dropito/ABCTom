@@ -175,7 +175,11 @@ export const sfx = {
 };
 
 // ---------- Gravação ----------
-// Captura PCM pela Web Audio e gera WAV: funciona no Safari do iOS 16 sem depender do MediaRecorder.
+// Estratégia (revista depois de falhas no Safari do Mac):
+//  • microfone sem processamento de voz (o cancelamento de eco do Safari "come" sílabas);
+//  • captura pelo MediaRecorder nativo (não perde pedaços quando a página está ocupada);
+//  • um AudioContext próprio, criado DEPOIS do microfone, só para o medidor de volume e para decodificar;
+//  • corte de silêncio conservador sobre a gravação inteira, com folga generosa nas pontas.
 export function micSupport() {
   const why = [];
   if (!window.isSecureContext) why.push('página sem HTTPS');
@@ -185,83 +189,167 @@ export function micSupport() {
 }
 export const canRecord = () => micSupport().length === 0;
 
-// Microfone aberto uma vez só (a gravação em sequência não pede permissão a cada frase).
 export function openMic() {
-  return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+  return navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
+  });
 }
 export function closeMic(stream) {
   if (stream) stream.getTracks().forEach((t) => t.stop());
 }
 
+const isMac = /Macintosh/.test(navigator.userAgent) && !('ontouchend' in document);
 export function micError(e) {
   const n = (e && e.name) || '';
-  if (n === 'NotAllowedError') return 'O iPad negou o microfone. Veja em Ajustes → Safari → Microfone (deixe “Perguntar” ou “Permitir”) e em Ajustes → Tempo de Uso → Conteúdo e Privacidade → Microfone.';
+  if (n === 'NotAllowedError') return isMac
+    ? 'O navegador não tem permissão de microfone. No Safari: Ajustes → Sites → Microfone → localhost: Permitir. No Mac: Ajustes do Sistema → Privacidade e Segurança → Microfone → Safari ligado.'
+    : 'O iPad negou o microfone. Veja em Ajustes → Safari → Microfone (deixe “Perguntar” ou “Permitir”) e em Ajustes → Tempo de Uso → Conteúdo e Privacidade → Microfone.';
   if (n === 'NotFoundError') return 'Nenhum microfone encontrado.';
   if (n === 'NotReadableError') return 'O microfone está ocupado por outro app. Feche outros apps e tente de novo.';
+  if (n === 'Silencio') return e.message;
   return `${n || 'Erro'}: ${(e && e.message) || e}`;
 }
 
-// Grava do `stream`; `unlockAudio()` precisa ter sido chamado no toque.
-export function record(stream, maxMs = 6000) {
-  unlockAudio();
-  const src = ctx.createMediaStreamSource(stream);
-  const proc = ctx.createScriptProcessor(4096, 1, 1);
-  const mute = ctx.createGain();
-  mute.gain.value = 0;
-  const bufs = [];
-  proc.onaudioprocess = (e) => bufs.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-  src.connect(proc);
-  proc.connect(mute).connect(ctx.destination);
-  let resolve, stopped = false;
-  const finished = new Promise((r) => { resolve = r; });
-  const stop = () => {
-    if (stopped) return;
-    stopped = true;
-    clearTimeout(timer);
-    proc.onaudioprocess = null;
-    src.disconnect(); proc.disconnect(); mute.disconnect();
-    resolve(toWav(bufs, ctx.sampleRate));
+const MR_TYPES = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'];
+
+// Abre o microfone e devolve um gravador reutilizável (uma permissão para a sessão inteira).
+export async function createMic() {
+  const stream = await openMic();
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const mctx = new AC();
+  try { await mctx.resume(); } catch (e) { /* noop */ }
+  const src = mctx.createMediaStreamSource(stream);
+  const an = mctx.createAnalyser();
+  an.fftSize = 1024;
+  src.connect(an);
+  const bytes = new Uint8Array(an.fftSize);
+  const level = () => {
+    an.getByteTimeDomainData(bytes);
+    let sum = 0;
+    for (let i = 0; i < bytes.length; i++) { const v = (bytes[i] - 128) / 128; sum += v * v; }
+    return Math.sqrt(sum / bytes.length);
   };
-  const timer = setTimeout(stop, maxMs);
-  return { stop, finished };
+
+  const type = window.MediaRecorder ? MR_TYPES.find((t) => MediaRecorder.isTypeSupported(t)) : null;
+  let rec = null, chunks = [], timer = 0, stopping = null, pcm = null, proc = null, resolveResult = null;
+
+  async function start(maxMs = 8000) {
+    if (mctx.state !== 'running') { try { await mctx.resume(); } catch (e) { /* noop */ } }
+    chunks = [];
+    stopping = null;
+    const result = new Promise((r) => { resolveResult = r; });
+    if (window.MediaRecorder) {
+      rec = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+      rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      const started = new Promise((r) => { rec.onstart = r; setTimeout(r, 400); });
+      rec.start();
+      await started;
+    } else {
+      // Sem MediaRecorder: captura PCM direto (navegadores antigos).
+      pcm = [];
+      proc = mctx.createScriptProcessor(4096, 1, 1);
+      proc.onaudioprocess = (e) => pcm.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+      const mute = mctx.createGain(); mute.gain.value = 0;
+      src.connect(proc); proc.connect(mute).connect(mctx.destination);
+    }
+    timer = setTimeout(() => stop(), maxMs);
+    return { result }; // resolve quando a gravação terminar (stop() ou limite de tempo)
+  }
+
+  function stop() {
+    if (stopping) return stopping;
+    clearTimeout(timer);
+    stopping = (async () => {
+      await wait(350); // folga no fim: a última sílaba não é cortada
+      let x, rate, raw = null;
+      if (rec) {
+        const done = new Promise((r) => { rec.onstop = r; });
+        rec.stop();
+        await done;
+        raw = new Blob(chunks, { type: rec.mimeType || type || 'audio/mp4' });
+        rec = null;
+        try {
+          const ab = await raw.arrayBuffer();
+          const audio = await new Promise((res, rej) => mctx.decodeAudioData(ab, res, rej));
+          x = audio.getChannelData(0); rate = audio.sampleRate;
+        } catch (e) {
+          const err = new Error('Não consegui ler a gravação (' + (e && e.message) + ').');
+          return { error: err, raw };
+        }
+      } else {
+        proc.onaudioprocess = null; proc.disconnect();
+        let n = 0; for (const b of pcm) n += b.length;
+        x = new Float32Array(n); let o = 0; for (const b of pcm) { x.set(b, o); o += b.length; }
+        rate = mctx.sampleRate;
+      }
+      const out = processPcm(x, rate);
+      out.raw = raw;
+      proc = null;
+      return out;
+    })();
+    stopping.then((out) => resolveResult && resolveResult(out));
+    return stopping;
+  }
+
+  const close = () => { try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (e) { /* noop */ } closeMic(stream); try { mctx.close(); } catch (e) { /* noop */ } };
+  return { level, start, stop, close, recording: () => !!(rec || proc) && !stopping };
 }
 
-// Junta, reduz para ~24 kHz, corta silêncio das pontas e normaliza o volume.
-function toWav(bufs, rate) {
-  let n = 0;
-  for (const b of bufs) n += b.length;
-  let x = new Float32Array(n);
-  let o = 0;
-  for (const b of bufs) { x.set(b, o); o += b.length; }
+// Reduz para ~24 kHz, corta só o silêncio das pontas (com folga), suaviza bordas e normaliza o volume.
+function processPcm(x, rate) {
   const f = Math.max(1, Math.floor(rate / 24000));
   if (f > 1) {
     const y = new Float32Array(Math.floor(x.length / f));
     for (let i = 0; i < y.length; i++) { let s = 0; for (let k = 0; k < f; k++) s += x[i * f + k]; y[i] = s / f; }
-    x = y; rate = rate / f;
+    x = y; rate = Math.round(rate / f);
   }
+  const win = Math.max(1, Math.round(rate * 0.01));
+  const nw = Math.floor(x.length / win);
+  const rms = new Float32Array(nw);
+  let maxRms = 0;
+  for (let w = 0; w < nw; w++) {
+    let s = 0; for (let i = w * win; i < (w + 1) * win; i++) s += x[i] * x[i];
+    rms[w] = Math.sqrt(s / win); if (rms[w] > maxRms) maxRms = rms[w];
+  }
+  // Onda para o desenho (antes do corte).
+  const bins = 120, wave = new Float32Array(bins);
+  for (let b = 0; b < bins; b++) {
+    const a0 = Math.floor((b / bins) * x.length), a1 = Math.floor(((b + 1) / bins) * x.length);
+    let m = 0; for (let i = a0; i < a1; i++) m = Math.max(m, Math.abs(x[i])); wave[b] = m;
+  }
+  if (maxRms < 0.002) {
+    const e = new Error(isMac
+      ? 'Não chegou som do microfone. Confira em Ajustes do Sistema → Som → Entrada qual microfone está escolhido e se o volume de entrada não está no mínimo.'
+      : 'Não chegou som do microfone. Ele pode estar bloqueado ou com defeito.');
+    e.name = 'Silencio';
+    return { error: e, wave };
+  }
+  const sorted = Array.from(rms).sort((a, b) => a - b);
+  const noise = sorted[Math.floor(sorted.length * 0.2)] || 0;
+  const thr = Math.max(noise * 4, maxRms * 0.05, 0.002);
+  let first = 0, last = nw - 1;
+  while (first < nw && rms[first] < thr) first++;
+  while (last > first && rms[last] < thr) last--;
+  const a = Math.max(0, first * win - Math.round(rate * 0.25));
+  const b = Math.min(x.length, (last + 1) * win + Math.round(rate * 0.4));
+  const y = x.slice(a, b);
   let peak = 0;
-  for (let i = 0; i < x.length; i++) peak = Math.max(peak, Math.abs(x[i]));
-  if (peak < 0.01) {
-    const err = new Error('Não captei som nenhum. O microfone pode estar bloqueado ou com defeito.');
-    err.name = 'Silencio';
-    return { error: err };
+  for (let i = 0; i < y.length; i++) peak = Math.max(peak, Math.abs(y[i]));
+  const gain = Math.min(6, 0.89 / (peak || 1));
+  const fade = Math.round(rate * 0.015);
+  for (let i = 0; i < y.length; i++) {
+    let g = gain;
+    if (i < fade) g *= i / fade; else if (i > y.length - fade) g *= (y.length - i) / fade;
+    y[i] = Math.max(-1, Math.min(1, y[i] * g));
   }
-  const th = Math.max(0.02, peak * 0.08);
-  let a = 0, b = x.length - 1;
-  while (a < x.length && Math.abs(x[a]) < th) a++;
-  while (b > a && Math.abs(x[b]) < th) b--;
-  a = Math.max(0, a - Math.floor(rate * 0.08));
-  b = Math.min(x.length, b + Math.floor(rate * 0.18));
-  x = x.subarray(a, b);
-  const gain = Math.min(8, 0.9 / peak);
-  const pcm = new DataView(new ArrayBuffer(44 + x.length * 2));
-  const str = (off, s) => { for (let i = 0; i < s.length; i++) pcm.setUint8(off + i, s.charCodeAt(i)); };
-  str(0, 'RIFF'); pcm.setUint32(4, 36 + x.length * 2, true); str(8, 'WAVE');
-  str(12, 'fmt '); pcm.setUint32(16, 16, true); pcm.setUint16(20, 1, true); pcm.setUint16(22, 1, true);
-  pcm.setUint32(24, rate, true); pcm.setUint32(28, rate * 2, true); pcm.setUint16(32, 2, true); pcm.setUint16(34, 16, true);
-  str(36, 'data'); pcm.setUint32(40, x.length * 2, true);
-  for (let i = 0; i < x.length; i++) pcm.setInt16(44 + i * 2, Math.max(-1, Math.min(1, x[i] * gain)) * 0x7fff, true);
-  return { blob: new Blob([pcm], { type: 'audio/wav' }) };
+  const dv = new DataView(new ArrayBuffer(44 + y.length * 2));
+  const str = (off, t) => { for (let i = 0; i < t.length; i++) dv.setUint8(off + i, t.charCodeAt(i)); };
+  str(0, 'RIFF'); dv.setUint32(4, 36 + y.length * 2, true); str(8, 'WAVE');
+  str(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, rate, true); dv.setUint32(28, rate * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+  str(36, 'data'); dv.setUint32(40, y.length * 2, true);
+  for (let i = 0; i < y.length; i++) dv.setInt16(44 + i * 2, y[i] * 0x7fff, true);
+  return { blob: new Blob([dv], { type: 'audio/wav' }), wave, kept: [a / x.length, b / x.length], seconds: y.length / rate };
 }
 
 // Toca um blob recém-gravado (antes de salvar).

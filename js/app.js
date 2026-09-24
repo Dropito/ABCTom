@@ -1,5 +1,5 @@
 import { LETTERS, BY_LETTER, ORDER, PHRASES, LEVELS, letterClips } from './data.js';
-import { ART, pic } from './art.js';
+import { ART, pic, bareUrl } from './art.js';
 import { backdrop, toUrl } from './kz/engine.js';
 import * as A from './audio.js';
 import * as S from './store.js';
@@ -68,7 +68,7 @@ function confetti(x = 50, y = 50) {
 // ---------------- Início ----------------
 function home() {
   const n = S.inGarage();
-  const id = show(`
+  const id = show(`${homeDeco()}
     <div class="mascot bob">${ART.escavadeira()}</div>
     <h1 class="logo">ABC <span>do Tom</span></h1>
     <div class="menu">
@@ -88,6 +88,20 @@ function home() {
   tap($('.mascot'), () => { A.sfx.vroom(); A.say('p_oi'); });
   holdGate($('.gear'), parent);
   return id;
+}
+
+// Enfeites da tela inicial: blocos de letras flutuando, nuvens e veículos passando no morro.
+const BLOCKS = [
+  ['T', 7, 14, '#E53935', -12], ['O', 16, 34, '#FB8C00', 8], ['M', 6, 55, '#43A047', -6],
+  ['A', 86, 30, '#1E88E5', 10], ['B', 76, 50, '#8E24AA', -9], ['C', 90, 60, '#00897B', 6],
+  ['Z', 24, 12, '#F9A825', 14], ['E', 72, 14, '#D81B60', -14],
+];
+function homeDeco() {
+  return `<div class="deco" aria-hidden="true">
+    <img class="cloud c1" src="${bareUrl('nuvem')}" alt=""><img class="cloud c2" src="${bareUrl('nuvem')}" alt=""><img class="cloud c3" src="${bareUrl('nuvem')}" alt="">
+    ${BLOCKS.map(([L, x, y, c, r], i) => `<span class="block" style="left:${x}%;top:${y}%;--c:#fff;--b:${c};--r:${r}deg;animation-delay:-${i * 0.7}s">${glyph(L)}</span>`).join('')}
+    <img class="rover r1" src="${bareUrl('trator')}" alt=""><img class="rover r2" src="${bareUrl('betoneira')}" alt="">
+  </div>`;
 }
 
 // Portão dos pais: segurar 2 segundos.
@@ -360,8 +374,9 @@ let STUDIO = false;
 const voices = {
   has: (id) => (STUDIO ? A.hasBundled(id) : A.hasRecording(id)),
   count: () => (STUDIO ? A.bundledCount() : A.recordingCount()),
-  async save(id, blob) {
+  async save(id, blob, raw) {
     if (!STUDIO) return A.saveRecording(id, blob);
+    if (raw) fetch(`api/raw?id=${id}`, { method: 'POST', body: raw }).catch(() => {});
     const r = await fetch(`api/save?id=${id}`, { method: 'POST', body: blob });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || 'falha ao salvar');
@@ -373,19 +388,6 @@ const voices = {
     A.setBundled(id, null);
   },
 };
-
-// Grava uma fala: abre o microfone se preciso e devolve o WAV (ou lança erro legível).
-async function captureInto(state, onRecording) {
-  A.unlockAudio();
-  A.stopVoice();
-  if (!state.stream) state.stream = await A.openMic();
-  onRecording();
-  state.active = A.record(state.stream, 6000);
-  const out = await state.active.finished;
-  state.active = null;
-  if (out.error) throw out.error;
-  return out.blob;
-}
 
 function recRow(c) {
   const has = voices.has(c.id);
@@ -407,7 +409,7 @@ function recTab() {
        serve para retoques.</p>`;
   return `${where}
     <p class="p-note">Fale perto do microfone e com calma; deixe meio segundo de silêncio antes de falar. O silêncio das pontas
-      é cortado e o volume é ajustado sozinho. Cada gravação para em 6 s, ou toque em ■.
+      é cortado e o volume é ajustado sozinho. ${STUDIO ? 'No Mac: <b>segure a barra de espaço</b> enquanto fala; Enter vai para a próxima.' : 'Segure o botão vermelho enquanto fala.'}
       Gravadas aqui: <b>${voices.count()}</b> de ${SEQUENCE.length}.</p>
     <div class="p-warn hidden-empty" id="mic-msg"></div>
     ${why.length ? `<p class="p-warn">Não dá para gravar aqui: ${why.join('; ')}.</p>` : `
@@ -430,49 +432,16 @@ function micMsg(text, ok = false) {
   m.scrollIntoView({ block: 'nearest' });
 }
 function bindRec() {
-  const st = { stream: null, active: null };
   const gm = $('.g-go.missing'), ga = $('.g-go.all'), gt = $('.g-go.test');
-  if (gm) gm.onclick = () => guided(true);
-  if (ga) ga.onclick = () => guided(false);
-  if (gt) gt.onclick = async () => {
-    gt.textContent = '🎤 Fale alguma coisa… (3 s)';
-    try {
-      A.unlockAudio();
-      const stream = await A.openMic();
-      const rec = A.record(stream, 3000);
-      const out = await rec.finished;
-      A.closeMic(stream);
-      if (out.error) throw out.error;
-      micMsg(`Microfone funcionando! Taxa: ${A.audioCtx().sampleRate} Hz. Tocando o que foi gravado…`, true);
-      await A.playBlob(out.blob);
-    } catch (e) {
-      micMsg('Problema no microfone — ' + A.micError(e));
-    }
-    gt.textContent = '🎤 Testar microfone';
-  };
+  if (gm) gm.onclick = () => guided(SEQUENCE.filter((it) => !voices.has(it.c.id)));
+  if (ga) ga.onclick = () => guided(SEQUENCE);
+  if (gt) gt.onclick = () => guided([{ c: { id: '__teste', t: 'Um, dois, três, testando!', label: 'Teste do microfone (não é salvo)' } }], true);
   app.querySelectorAll('.r-row').forEach((row) => {
     const id = row.dataset.id;
     row.querySelector('.r-play').onclick = () => { A.unlockAudio(); A.say(id); };
     const del = row.querySelector('.r-del');
     if (del) del.onclick = async () => { await voices.del(id); row.outerHTML = recRow(clipOf(id)); bindRec(); };
-    const btn = row.querySelector('.r-rec');
-    btn.onclick = async () => {
-      if (st.active) { st.active.stop(); return; }
-      try {
-        const blob = await captureInto(st, () => { btn.textContent = '■ Parar'; row.classList.add('recording'); });
-        A.closeMic(st.stream); st.stream = null;
-        await voices.save(id, blob);
-        await A.say(id);
-        const y = $('.p-body').scrollTop;
-        parent('rec');
-        $('.p-body').scrollTop = y;
-      } catch (e) {
-        A.closeMic(st.stream); st.stream = null; st.active = null;
-        btn.textContent = '● Gravar';
-        row.classList.remove('recording');
-        micMsg('Não consegui gravar — ' + A.micError(e));
-      }
-    };
+    row.querySelector('.r-rec').onclick = () => guided(SEQUENCE.filter((it) => it.c.id === id));
   });
 }
 function clipOf(id) {
@@ -491,79 +460,165 @@ const SEQUENCE = [
   }),
 ];
 
-// Gravação guiada: uma fala por tela — gravar, ouvir, próxima.
-function guided(onlyMissing) {
-  const items = SEQUENCE.filter((it) => !onlyMissing || !voices.has(it.c.id));
+// Gravação guiada: uma fala por tela. Segure para falar (botão ou barra de espaço), solte para parar;
+// a gravação toca de volta com a forma de onda, e Enter/✓ vai para a próxima.
+function guided(items, testOnly = false) {
   if (!items.length) { micMsg('Tudo já está gravado! 🎉', true); return; }
-  let i = 0, phase = 'idle', saved = 0, error = '';
-  const st = { stream: null, active: null };
+  let i = 0, phase = 'idle', saved = 0, error = '', mic = null, last = null, raf = 0, holdT = 0, quiet = 0, starting = false, pendingStop = false;
   const id = show(`
-    <header class="p-head"><button class="p-close">✕ Parar</button>
+    <header class="p-head"><button class="p-close">✕ Sair</button>
       ${STUDIO ? '<span class="g-studio">🎙️ Estúdio</span>' : ''}<span class="g-count"></span></header>
     <main class="g-body"></main>`, 'parent guided');
-  const quit = () => { if (st.active) st.active.stop(); A.closeMic(st.stream); st.stream = null; parent('rec'); };
+  const quit = () => {
+    cancelAnimationFrame(raf);
+    removeEventListener('keydown', onKey); removeEventListener('keyup', onKeyUp);
+    if (mic) mic.close();
+    parent('rec');
+  };
   $('.p-close').onclick = quit;
+
+  // Medidor de volume ao vivo (mostra que o microfone está ouvindo).
+  const meter = () => {
+    if (!alive(id)) return;
+    const bar = $('.g-meter i'), hint = $('.g-meter-hint');
+    if (mic && bar) {
+      const lv = Math.min(1, mic.level() * 6);
+      bar.style.width = `${Math.round(lv * 100)}%`;
+      bar.style.background = lv > 0.85 ? '#E53935' : lv > 0.08 ? '#43A047' : '#90A4AE';
+      if (phase === 'recording') {
+        quiet = lv < 0.02 ? quiet + 1 : 0;
+        if (hint) hint.textContent = quiet > 90 ? 'Não estou ouvindo nada… confira o microfone do Mac.' : 'Gravando… fale agora';
+      }
+    }
+    raf = requestAnimationFrame(meter);
+  };
+
+  const ensureMic = async () => {
+    if (mic) return;
+    A.unlockAudio();
+    mic = await A.createMic();
+    raf = requestAnimationFrame(meter);
+  };
+
+  const drawWave = () => {
+    const cv = $('.g-wave');
+    if (!cv || !last || !last.wave) return;
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height, n = last.wave.length;
+    g.clearRect(0, 0, W, H);
+    const [ka, kb] = last.kept || [0, 1];
+    g.fillStyle = 'rgba(67,160,71,.12)';
+    g.fillRect(ka * W, 0, (kb - ka) * W, H);
+    let mx = 0; for (const v of last.wave) mx = Math.max(mx, v);
+    for (let b = 0; b < n; b++) {
+      const h = Math.max(2, (last.wave[b] / (mx || 1)) * (H - 6));
+      const x = (b / n) * W;
+      g.fillStyle = b / n >= ka && b / n <= kb ? '#43A047' : '#B0BEC5';
+      g.fillRect(x, (H - h) / 2, W / n - 1, h);
+    }
+  };
+
+  const begin = async () => {
+    if (phase === 'recording' || phase === 'saving') return;
+    error = '';
+    try {
+      A.stopVoice();
+      await ensureMic();
+      phase = 'recording'; quiet = 0; render();
+      starting = true;
+      const { result } = await mic.start(8000);
+      starting = false;
+      result.then(finish); // termina ao soltar o botão/espaço ou no limite de 8 s
+      if (pendingStop) { pendingStop = false; mic.stop(); }
+    } catch (e) {
+      starting = false; pendingStop = false;
+      phase = 'idle'; error = 'Não consegui gravar — ' + A.micError(e); render();
+    }
+  };
+  const end = () => {
+    if (phase !== 'recording' || !mic) return;
+    if (starting) pendingStop = true; else mic.stop();
+  };
+  const finish = async (out) => {
+    if (!alive(id)) return;
+    last = out;
+    const { c } = items[i];
+    if (out.error) {
+      phase = 'idle'; error = 'Não gravou — ' + A.micError(out.error); render(); drawWave();
+      return;
+    }
+    if (!testOnly) {
+      phase = 'saving'; render();
+      try { await voices.save(c.id, out.blob, out.raw); saved++; } catch (e) { phase = 'idle'; error = 'Gravou, mas não salvou: ' + e.message; render(); return; }
+    }
+    phase = 'review'; render(); drawWave();
+    A.playBlob(out.blob);
+  };
+  const next = () => { i++; phase = 'idle'; last = null; error = ''; render(); };
+
+  const onKey = (e) => {
+    if (!alive(id)) return;
+    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) begin(); }
+    else if (e.key === 'Enter' && phase === 'review') { e.preventDefault(); next(); }
+    else if ((e.key === 'p' || e.key === 'P') && last && last.blob) A.playBlob(last.blob);
+  };
+  const onKeyUp = (e) => { if (e.code === 'Space') { e.preventDefault(); end(); } };
+  addEventListener('keydown', onKey);
+  addEventListener('keyup', onKeyUp);
 
   const render = () => {
     if (!alive(id)) return;
     const body = $('.g-body');
     if (i >= items.length) {
-      A.closeMic(st.stream); st.stream = null;
+      cancelAnimationFrame(raf);
+      removeEventListener('keydown', onKey); removeEventListener('keyup', onKeyUp);
+      if (mic) { mic.close(); mic = null; }
       $('.g-count').textContent = '';
-      body.innerHTML = `<div class="g-done">🎉<p><b>Pronto!</b> ${saved} gravações salvas.</p>
+      body.innerHTML = `<div class="g-done">🎉<p><b>Pronto!</b> ${testOnly ? 'Teste concluído.' : `${saved} gravações salvas.`}</p>
         <button class="g-btn primary">Voltar</button></div>`;
       body.querySelector('.g-btn').onclick = () => parent('rec');
       return;
     }
     const { c, x, word } = items[i];
     const has = voices.has(c.id);
-    $('.g-count').textContent = `${i + 1} de ${items.length}`;
+    $('.g-count').textContent = items.length > 1 ? `${i + 1} de ${items.length}` : '';
     body.innerHTML = `
-      <div class="g-progress"><div style="width:${(i / items.length) * 100}%"></div></div>
+      ${items.length > 1 ? `<div class="g-progress"><div style="width:${(i / items.length) * 100}%"></div></div>` : ''}
       <div class="g-context">
         ${x ? `<span class="g-letter" ${letterStyle(x)}>${glyph(x)}</span>` : '<span class="g-phrase">💬</span>'}
         ${word ? pic(word) : ''}
       </div>
       <p class="g-hint">${x ? { n: 'Nome da letra', d: 'Letra + figura principal', w: 'Nome da figura' }[c.id[0]] : c.label}</p>
       <p class="g-say">“${c.t.replace(', de ', '… de ')}”</p>
+      <div class="g-meter"><i></i></div>
+      <p class="g-meter-hint">${phase === 'recording' ? 'Gravando… fale agora' : phase === 'saving' ? 'Salvando…' : mic ? 'Microfone ligado' : 'O microfone liga no primeiro toque'}</p>
       ${error ? `<p class="p-warn g-err">${error}</p>` : ''}
+      ${last && last.wave ? '<canvas class="g-wave" width="600" height="70"></canvas>' : ''}
       <div class="g-actions">
-        ${phase === 'idle' ? `
-          <button class="g-btn skip">Pular</button>
-          <button class="g-btn rec">● Gravar</button>
-          ${has ? '<button class="g-btn listen">▶ Atual</button>' : '<span class="g-spacer"></span>'}` : ''}
-        ${phase === 'recording' ? '<button class="g-btn stop">■ Parar</button>' : ''}
-        ${phase === 'saving' ? '<span class="g-hint">Salvando…</span>' : ''}
         ${phase === 'review' ? `
-          <button class="g-btn again">↻ Regravar</button>
-          <button class="g-btn primary next">✓ Próxima</button>
-          <button class="g-btn listen">▶ Ouvir</button>` : ''}
-      </div>`;
+          <button class="g-btn listen">▶ Ouvir <small>P</small></button>
+          <button class="g-btn hold again">● Regravar</button>
+          <button class="g-btn primary next">✓ Próxima <small>Enter</small></button>` : `
+          ${items.length > 1 ? '<button class="g-btn skip">Pular</button>' : '<span class="g-spacer"></span>'}
+          <button class="g-btn hold rec ${phase === 'recording' ? 'on' : ''}">${phase === 'recording' ? '■ Solte<br>para parar' : '● Segure<br>para falar'}</button>
+          ${has && !testOnly ? '<button class="g-btn listen-cur">▶ Atual</button>' : '<span class="g-spacer"></span>'}`}
+      </div>
+      <p class="g-hint g-keys">${STUDIO || /Macintosh/.test(navigator.userAgent) ? 'Atalho: segure a <b>barra de espaço</b> para falar · <b>Enter</b> próxima · <b>P</b> ouvir' : 'Segure o botão enquanto fala. Toque rápido = começa; toque de novo = para.'}</p>`;
     const on = (sel, fn) => { const b = body.querySelector(sel); if (b) b.onclick = fn; };
-    on('.skip', () => { i++; error = ''; render(); });
-    on('.next', () => { i++; phase = 'idle'; render(); });
-    on('.listen', () => { A.unlockAudio(); A.say(c.id); });
-    on('.stop', () => st.active && st.active.stop());
-    const start = async () => {
-      error = '';
-      try {
-        const blob = await captureInto(st, () => { phase = 'recording'; render(); });
-        if (!alive(id)) return;
-        phase = 'saving'; render();
-        await voices.save(c.id, blob);
-        saved++;
-        phase = 'review';
-        render();
-        A.say(c.id);
-      } catch (e) {
-        A.closeMic(st.stream); st.stream = null; st.active = null;
-        phase = 'idle';
-        error = 'Não consegui gravar — ' + A.micError(e);
-        render();
-      }
-    };
-    on('.rec', start);
-    on('.again', start);
+    on('.skip', next);
+    on('.next', next);
+    on('.listen', () => last && last.blob && A.playBlob(last.blob));
+    on('.listen-cur', () => { A.unlockAudio(); A.say(c.id); });
+    // Botão "segure para falar": segurou = grava até soltar; toque rápido = alterna.
+    body.querySelectorAll('.g-btn.hold').forEach((b) => {
+      b.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (phase === 'recording') { end(); return; }
+        holdT = Date.now();
+        begin();
+        const up = () => { removeEventListener('pointerup', up); if (Date.now() - holdT > 450) end(); };
+        addEventListener('pointerup', up);
+      });
+    });
   };
   render();
 }

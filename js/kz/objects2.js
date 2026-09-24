@@ -286,7 +286,8 @@ export const OBJ2 = {
   zabumba: { draw: (k) =>
     k.e(100, 76, 76, 26, k.G('white')) +
     k.p('M24 76 L24 146 Q24 172 100 172 Q176 172 176 146 L176 76 Q176 102 100 102 Q24 102 24 76Z', k.G('red')) +
-    [36, 64, 92, 120, 148].map((x) => k.bar(x, 106, x + 14, 160, 3, '#fff6dc') + k.bar(x + 14, 106, x, 160, 3, '#fff6dc')).join('') +
+    // hastes verticais (cordas cruzadas pareciam a letra X)
+    [40, 66, 92, 118, 144, 162].map((x) => k.r(x, 104, 5, 58, k.G('gold', 'h'), 2)).join('') +
     k.p('M24 140 Q24 172 100 172 Q176 172 176 140 L176 150 Q176 182 100 182 Q24 182 24 150Z', k.G('dbrown')) +
     k.bar(140, 40, 186, 4, 7, '#8a4a2a') + k.c(186, 4, 12, k.G('cream')) },
 };

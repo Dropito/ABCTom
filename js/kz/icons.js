@@ -24,6 +24,6 @@ const DRAW = {
 const cache = new Map();
 export function iconUrl(ch) {
   if (!DRAW[ch]) return null;
-  if (!cache.has(ch)) { const k = kit(); cache.set(ch, toUrl(doc(100, 100, k, DRAW[ch](k)))); }
+  if (!cache.has(ch)) { const k = kit(); cache.set(ch, toUrl(doc(100, 100, k, DRAW[ch](k)).replace('<svg ', '<svg width="100" height="100" '))); }
   return cache.get(ch);
 }
