@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="0" fill="#FFC107"/>
+  <rect y="380" width="512" height="132" fill="#A86B34"/>
+  <text x="256" y="330" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-weight="900" font-size="200" fill="#263238"><tspan fill="#E53935">A</tspan><tspan fill="#1E88E5">B</tspan><tspan fill="#43A047">C</tspan></text>
+  <text x="256" y="470" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-size="72" fill="#fff">Tom</text>
+</svg>
