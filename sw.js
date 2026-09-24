@@ -1,10 +1,18 @@
 // Cache offline: tudo o que o app precisa fica no iPad.
-const V = 'abc-do-tom-v2';
-const FILES = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/data.js', 'js/art.js', 'js/audio.js', 'js/store.js',
+const V = 'abc-do-tom-v3';
+const FILES = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/data.js', 'js/art.js', 'js/audio.js', 'js/store.js', 'js/glyph.js',
   'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(V).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // Também guarda as vozes publicadas (audio/index.json), para funcionarem offline.
+  e.waitUntil(caches.open(V).then(async (c) => {
+    await c.addAll(FILES);
+    try {
+      const idx = await (await fetch('audio/index.json', { cache: 'no-cache' })).json();
+      await c.put('audio/index.json', new Response(JSON.stringify(idx), { headers: { 'Content-Type': 'application/json' } }));
+      await c.addAll(Object.keys(idx).map((id) => `audio/${id}.m4a`));
+    } catch (err) { /* ainda sem vozes publicadas */ }
+  }).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== V).map((k) => caches.delete(k))))

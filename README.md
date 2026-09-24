@@ -11,6 +11,17 @@ python3 -m http.server 3002
 
 A gravação de voz e o modo offline exigem HTTPS (ou `localhost`).
 
+## Estúdio de voz (Mac)
+
+```bash
+python3 tools/estudio.py
+```
+
+Abra http://localhost:3003/?estudio no Safari ou Chrome do Mac e grave em sequência. Cada fala vira
+`audio/<id>.m4a` (AAC, convertido pelo `afconvert`) e entra em `audio/index.json`. Depois é só commitar e dar push:
+as vozes passam a fazer parte do app e o service worker guarda tudo para uso offline no iPad.
+A ordem de prioridade na reprodução é: gravação feita no próprio aparelho → voz publicada → voz sintética.
+
 ## Estrutura
 
 - `js/data.js`: letras, figuras (a primeira é a âncora), ordem de introdução, estado inicial e frases faladas.
@@ -18,7 +29,9 @@ A gravação de voz e o modo offline exigem HTTPS (ou `localhost`).
 - `js/audio.js`: gravações do papai (IndexedDB), voz sintética pt-BR de reserva e efeitos em Web Audio.
 - `js/art.js`: ilustrações SVG próprias (escavadeira-mascote, betoneira, pulverizador, retroescavadeira, submarino).
 - `js/app.js`: telas (início, jogo, jogo com o papai, letras, garagem, área do papai).
-- Gravação guiada (Área do papai → Gravar voz): uma fala por tela, com o microfone aberto uma vez só.
+- `js/glyph.js`: centraliza letras e emojis pelo desenho real (mede no próprio aparelho), para corrigir os desvios de métrica do Safari.
+- `tools/estudio.py`: servidor do Estúdio de voz.
+- Gravação guiada (Área do papai → Gravar voz): uma fala por tela. Grava PCM pela Web Audio, corta o silêncio, normaliza o volume e gera WAV.
 - `sw.js`: cache offline. **Suba a versão `V` a cada deploy.**
 
 ## Mecânica didática

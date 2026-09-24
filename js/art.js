@@ -104,8 +104,10 @@ export const ART = {
 </svg>`,
 };
 
-// Figura de uma palavra: emoji nativo ou ilustração própria.
+import { emojiSrc } from './glyph.js';
+
+// Figura de uma palavra: emoji nativo (centralizado numa imagem) ou ilustração própria.
 export function pic(word, cls = '') {
   if (word.svg) return `<span class="pic svgpic ${cls}">${ART[word.svg]()}</span>`;
-  return `<span class="pic emoji ${cls}">${word.e}</span>`;
+  return `<span class="pic emoji ${cls}"><img src="${emojiSrc(word.e)}" alt="${word.w}" draggable="false"></span>`;
 }
