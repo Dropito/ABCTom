@@ -352,14 +352,21 @@ function recTab() {
   const secure = window.isSecureContext && A.canRecord();
   return `
     <p class="p-note">Grave com calma, perto do microfone, e fale o nome das letras como você quer que o Tom aprenda
-      (ex.: “bê”, “éle”). Cada gravação para sozinha em 4 s, ou toque em ■. Sem gravação, o app usa a voz do iPad.
-      Gravadas: <b>${A.recordingCount()}</b>.</p>
-    ${secure ? '' : '<p class="p-warn">A gravação só funciona com o app aberto por https (endereço publicado) ou localhost.</p>'}
+      (ex.: “bê”, “éle”). Cada gravação para sozinha em 6 s, ou toque em ■. Sem gravação, o app usa a voz do iPad.
+      Gravadas: <b>${A.recordingCount()}</b> de ${SEQUENCE.length}.</p>
+    ${secure ? `
+    <div class="g-start">
+      <button class="g-go missing">● Gravar em sequência — só o que falta (${SEQUENCE.length - A.recordingCount()})</button>
+      <button class="g-go all">Regravar tudo em sequência</button>
+    </div>` : '<p class="p-warn">A gravação só funciona com o app aberto por https (endereço publicado) ou localhost.</p>'}
     <h3>Frases</h3>${PHRASES.map(recRow).join('')}
     ${ORDER.map((x) => `<h3 ${letterStyle(x)}><span class="h-letter">${x}</span></h3>${letterClips(BY_LETTER[x]).map(recRow).join('')}`).join('')}`;
 }
 function bindRec() {
   let active = null;
+  const gm = $('.g-go.missing'), ga = $('.g-go.all');
+  if (gm) gm.onclick = () => guided(true);
+  if (ga) ga.onclick = () => guided(false);
   app.querySelectorAll('.r-row').forEach((row) => {
     const id = row.dataset.id;
     row.querySelector('.r-play').onclick = () => { A.unlockAudio(); A.say(id); };
@@ -373,7 +380,7 @@ function bindRec() {
         A.stopVoice();
         btn.textContent = '■ Parar';
         row.classList.add('recording');
-        active = await A.record(4000);
+        active = await A.record(6000);
         const blob = await active.finished;
         active = null;
         await A.saveRecording(id, blob);
@@ -392,7 +399,95 @@ function bindRec() {
   });
 }
 function clipOf(id) {
-  return [...PHRASES, ...LETTERS.flatMap(letterClips)].find((c) => c.id === id);
+  return SEQUENCE.find((it) => it.c.id === id).c;
+}
+
+// Ordem da gravação guiada: frases, depois letras na ordem em que o Tom vai aprendê-las.
+const SEQUENCE = [
+  ...PHRASES.map((c) => ({ c })),
+  ...ORDER.flatMap((x) => {
+    const d = BY_LETTER[x];
+    return letterClips(d).map((c) => ({
+      c, x,
+      word: c.id.startsWith('w_') ? d.words.find((w) => `w_${w.id}` === c.id) : c.id.startsWith('d_') ? d.words[0] : null,
+    }));
+  }),
+];
+
+// Gravação guiada: uma fala por tela — gravar, ouvir, próxima.
+function guided(onlyMissing) {
+  const items = SEQUENCE.filter((it) => !onlyMissing || !A.hasRecording(it.c.id));
+  if (!items.length) { alert('Tudo já está gravado! 🎉'); return; }
+  let i = 0, phase = 'idle', stream = null, active = null, saved = 0;
+  const id = show(`
+    <header class="p-head"><button class="p-close">✕ Parar</button><span class="g-count"></span></header>
+    <main class="g-body"></main>`, 'parent guided');
+  const quit = () => { if (active) active.stop(); A.closeMic(stream); stream = null; parent('rec'); };
+  $('.p-close').onclick = quit;
+
+  const render = () => {
+    if (!alive(id)) return;
+    const body = $('.g-body');
+    if (i >= items.length) {
+      A.closeMic(stream); stream = null;
+      $('.g-count').textContent = '';
+      body.innerHTML = `<div class="g-done">🎉<p><b>Pronto!</b> ${saved} gravações salvas.</p>
+        <button class="g-btn primary">Voltar</button></div>`;
+      body.querySelector('.g-btn').onclick = () => parent('rec');
+      return;
+    }
+    const { c, x, word } = items[i];
+    const has = A.hasRecording(c.id);
+    $('.g-count').textContent = `${i + 1} de ${items.length}`;
+    body.innerHTML = `
+      <div class="g-progress"><div style="width:${(i / items.length) * 100}%"></div></div>
+      <div class="g-context">
+        ${x ? `<span class="g-letter" ${letterStyle(x)}>${x}</span>` : '<span class="g-phrase">💬</span>'}
+        ${word ? pic(word) : ''}
+      </div>
+      <p class="g-hint">${x ? { n: 'Nome da letra', d: 'Letra + figura principal', w: 'Nome da figura' }[c.id[0]] : c.label}</p>
+      <p class="g-say">“${c.t.replace(', de ', '… de ')}”</p>
+      <div class="g-actions">
+        ${phase === 'idle' ? `
+          <button class="g-btn skip">Pular</button>
+          <button class="g-btn rec">● Gravar</button>
+          ${has ? '<button class="g-btn listen">▶ Atual</button>' : '<span class="g-spacer"></span>'}` : ''}
+        ${phase === 'recording' ? '<button class="g-btn stop"><i></i>■ Parar</button>' : ''}
+        ${phase === 'review' ? `
+          <button class="g-btn again">↻ Regravar</button>
+          <button class="g-btn primary next">✓ Próxima</button>
+          <button class="g-btn listen">▶ Ouvir</button>` : ''}
+      </div>`;
+    const on = (sel, fn) => { const b = body.querySelector(sel); if (b) b.onclick = fn; };
+    on('.skip', () => { i++; render(); });
+    on('.next', () => { i++; phase = 'idle'; render(); });
+    on('.listen', () => { A.unlockAudio(); A.say(c.id); });
+    on('.stop', () => active && active.stop());
+    const start = async () => {
+      A.unlockAudio();
+      A.stopVoice();
+      try {
+        if (!stream) stream = await A.openMic();
+      } catch (e) {
+        alert('Não consegui acessar o microfone: ' + e.message);
+        return;
+      }
+      phase = 'recording';
+      render();
+      active = await A.record(6000, stream);
+      const blob = await active.finished;
+      active = null;
+      if (!alive(id)) return;
+      await A.saveRecording(c.id, blob);
+      saved++;
+      phase = 'review';
+      render();
+      A.say(c.id);
+    };
+    on('.rec', start);
+    on('.again', start);
+  };
+  render();
 }
 
 function cfgTab() {

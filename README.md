@@ -18,6 +18,7 @@ A gravação de voz e o modo offline exigem HTTPS (ou `localhost`).
 - `js/audio.js`: gravações do papai (IndexedDB), voz sintética pt-BR de reserva e efeitos em Web Audio.
 - `js/art.js`: ilustrações SVG próprias (escavadeira-mascote, betoneira, pulverizador, retroescavadeira, submarino).
 - `js/app.js`: telas (início, jogo, jogo com o papai, letras, garagem, área do papai).
+- Gravação guiada (Área do papai → Gravar voz): uma fala por tela, com o microfone aberto uma vez só.
 - `sw.js`: cache offline. **Suba a versão `V` a cada deploy.**
 
 ## Mecânica didática

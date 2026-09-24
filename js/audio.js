@@ -163,15 +163,25 @@ export const sfx = {
 export function canRecord() {
   return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
 }
-export async function record(maxMs = 4000, onStop) {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+// Microfone aberto uma vez só (a gravação em sequência não pede permissão a cada frase).
+export function openMic() {
+  return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
+}
+export function closeMic(stream) {
+  if (stream) stream.getTracks().forEach((t) => t.stop());
+}
+
+// Grava do `stream` dado (ou abre e fecha o microfone sozinho).
+export async function record(maxMs = 4000, stream = null) {
+  const own = !stream;
+  if (own) stream = await openMic();
   const type = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find((t) => MediaRecorder.isTypeSupported(t));
   const rec = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
   const chunks = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   const finished = new Promise((res) => {
     rec.onstop = () => {
-      stream.getTracks().forEach((t) => t.stop());
+      if (own) closeMic(stream);
       res(new Blob(chunks, { type: rec.mimeType || type || 'audio/mp4' }));
     };
   });
@@ -179,6 +189,6 @@ export async function record(maxMs = 4000, onStop) {
   const timer = setTimeout(() => rec.state === 'recording' && rec.stop(), maxMs);
   return {
     stop: () => { clearTimeout(timer); if (rec.state === 'recording') rec.stop(); },
-    finished: finished.then((b) => { onStop && onStop(); return b; }),
+    finished,
   };
 }
