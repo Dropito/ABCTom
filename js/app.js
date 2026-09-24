@@ -1,5 +1,6 @@
 import { LETTERS, BY_LETTER, ORDER, PHRASES, LEVELS, letterClips } from './data.js';
 import { ART, pic } from './art.js';
+import { backdrop, toUrl } from './kz/engine.js';
 import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
@@ -593,6 +594,9 @@ function bindCfg() {
 }
 
 // ---------------- Boot ----------------
+// Fundo da interface: o mesmo mundo das figuras (meio-dia) e a versão noturna da despedida.
+document.documentElement.style.setProperty('--bg', `url("${toUrl(backdrop())}")`);
+document.documentElement.style.setProperty('--bg-night', `url("${toUrl(backdrop(true))}")`);
 Promise.all([A.loadRecordings(), A.loadBundled()]).then(async () => {
   if (new URLSearchParams(location.search).has('estudio')) {
     try { STUDIO = (await fetch('api/ping')).ok; } catch (e) { STUDIO = false; }

@@ -1,5 +1,5 @@
 // Conteúdo didático: letras, nomes falados e figuras (a primeira é a âncora).
-// `e` = emoji nativo do iPad; `svg` = ilustração própria em art.js.
+// Cada `id` tem uma ilustração vetorial em js/kz/objects*.js (o `e` fica só como referência).
 
 export const LETTERS = [
   { L: 'A', nome: 'á',       cor: '#E53935', words: [
@@ -53,7 +53,7 @@ export const LETTERS = [
   { L: 'Y', nome: 'ípsilon', cor: '#00897B', words: [
     { id: 'yakisoba', w: 'yakisoba', e: '🍜' }, { id: 'yoga', w: 'yoga', e: '🧘' } ] },
   { L: 'Z', nome: 'zê',      cor: '#3949AB', words: [
-    { id: 'zebra', w: 'zebra', e: '🦓' }, { id: 'zero', w: 'zero', svg: 'zero' }, { id: 'zabumba', w: 'zabumba', e: '🥁' } ] },
+    { id: 'zebra', w: 'zebra', e: '🦓' }, { id: 'ziper', w: 'zíper' }, { id: 'zabumba', w: 'zabumba', e: '🥁' } ] },
 ];
 
 export const BY_LETTER = Object.fromEntries(LETTERS.map((x) => [x.L, x]));

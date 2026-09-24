@@ -1,6 +1,8 @@
 // Centralização exata de letras e emojis: mede o desenho real do caractere (não a caixa da fonte)
 // no próprio aparelho e posiciona pelo centro visual. Resolve os desvios de métrica do Safari/iOS.
 
+import { iconUrl } from './kz/icons.js';
+
 const LETTER_FONT = '"Arial Rounded MT Bold", "Nunito", "Varela Round", ui-rounded, system-ui, sans-serif';
 const EMOJI_FONT = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
 
@@ -49,7 +51,7 @@ export function emojiSrc(ch) {
   emojiCache.set(ch, url);
   return url;
 }
-export const icon = (ch, cls = 'ico') => `<img class="${cls}" src="${emojiSrc(ch)}" alt="" draggable="false">`;
+export const icon = (ch, cls = 'ico') => `<img class="${cls}" src="${iconUrl(ch) || emojiSrc(ch)}" alt="" draggable="false">`;
 
 // Ícones vetoriais centrados pelo centro visual.
 export const SHAPES = {
