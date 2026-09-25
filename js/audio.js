@@ -193,9 +193,14 @@ function ensureCtx() {
 // iOS: o som só é liberado num gesto "completo" (touchend/click), não no toque inicial.
 // Chamado em todo toque; é barato depois da primeira vez.
 let unlocked = false;
+let micActive = false;
+function setSession(type) {
+  try { if (navigator.audioSession && navigator.audioSession.type !== type) navigator.audioSession.type = type; } catch (e) { /* noop */ }
+}
 export function unlockAudio() {
   // iOS 16.4+: trata o app como reprodução de mídia (toca mesmo com o iPad no silencioso).
-  try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch (e) { /* noop */ }
+  // Nunca durante uma gravação: com 'playback' o Safari recusa o microfone.
+  setSession(micActive ? 'play-and-record' : 'playback');
   if (!ensureCtx()) return;
   if (ctx.state !== 'running') ctx.resume().catch(() => {});
   if (!unlocked) {
@@ -257,12 +262,16 @@ export function micSupport() {
 export const canRecord = () => micSupport().length === 0;
 
 export function openMic() {
+  micActive = true;
+  setSession('play-and-record');
   return navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 },
   });
 }
 export function closeMic(stream) {
   if (stream) stream.getTracks().forEach((t) => t.stop());
+  micActive = false;
+  setSession('auto');
 }
 
 const isMac = /Macintosh/.test(navigator.userAgent) && !('ontouchend' in document);

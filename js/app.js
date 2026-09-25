@@ -5,7 +5,7 @@ import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
-export const APP_VERSION = '2026-09-25.1';
+export const APP_VERSION = '2026-09-25.2';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
