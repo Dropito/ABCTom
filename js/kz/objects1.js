@@ -291,7 +291,7 @@ export const OBJ1 = {
     Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2; return k.e(124 + Math.cos(a) * 26, 132 + Math.sin(a) * 22, 3, 5, '#1a1040'); }).join('') +
     k.p('M150 92 Q172 110 170 140 Q160 112 146 98Z', '#ffffff', 0.4) },
 
-  karate: { draw: (k) =>
+  kimono: { draw: (k) =>
     k.p('M40 50 L80 36 L100 60 L120 36 L160 50 L192 112 L166 124 L150 96 L150 190 L50 190 L50 96 L34 124 L8 112Z', k.G('white')) +
     k.p('M80 36 L100 60 L120 36 L110 36 L100 110 L90 36Z', k.lg(['#d0dcff', '#90a0d8'], 'v')) +
     k.r(48, 122, 104, 16, k.G('black', 'h')) +

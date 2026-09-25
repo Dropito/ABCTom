@@ -1,11 +1,11 @@
-import { LETTERS, BY_LETTER, ORDER, PHRASES, LEVELS, letterClips } from './data.js';
+import { LETTERS, BY_LETTER, ORDER, PHRASES, LEVELS, letterClips, allWords } from './data.js';
 import { ART, pic, bareUrl } from './art.js';
 import { backdrop, toUrl } from './kz/engine.js';
 import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
-export const APP_VERSION = '2026-09-24.9';
+export const APP_VERSION = '2026-09-25.1';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
@@ -285,22 +285,25 @@ function goodbye() {
 // ---------------- Caça às letras ----------------
 // Figuras sobem como bolhas; o Tom toca nas que começam com a letra da caçada.
 // Todo toque fala "palavra… letra" (acertando ou não). 5 figuras certas enchem a caçamba.
-const HUNT_GOAL = 5;
+const HUNT_GOAL = 5; // ou menos, se a letra tiver menos figuras (Z tem 4)
 function hunt() {
   const L0 = S.pickHuntLetter();
-  const mine = BY_LETTER[L0].words;
+  // Figuras da letra embaralhadas: cada uma aparece antes de alguma repetir.
+  const mine = allWords(BY_LETTER[L0]).slice().sort(() => Math.random() - 0.5);
+  const goal = Math.min(HUNT_GOAL, mine.length);
   // Distratores: palavras de outras letras (sem as letras especiais, que confundem pelo som).
-  const others = LETTERS.filter((d) => d.L !== L0 && !S.HUNT_SKIP.includes(d.L)).flatMap((d) => d.words.map((w) => ({ w, L: d.L })));
+  const others = LETTERS.filter((d) => d.L !== L0 && !S.HUNT_SKIP.includes(d.L)).flatMap((d) => allWords(d).map((w) => ({ w, L: d.L })));
   const got = [];
   let live = 0, sinceTarget = 0, finished = false;
-  // As figuras certas se revezam (todas aparecem), começando por uma aleatória.
-  let turn = Math.floor(Math.random() * mine.length);
+  // As figuras certas ainda não caçadas se revezam; nenhuma se repete na caçamba.
+  let turn = 0;
+  const nextTarget = () => { const left = mine.filter((w) => !got.includes(w)); return left[turn++ % left.length]; };
   const id = show(`${homeBtn}
     <button class="hunt-target" ${letterStyle(L0)} aria-label="Ouvir de novo">${glyph(L0)}</button>
     <div class="hunt-field"></div>
     <div class="hunt-tray">
       <div class="tray-esc">${ART.escavadeira()}</div>
-      <div class="tray-slots">${Array.from({ length: HUNT_GOAL }, () => '<span class="slot"></span>').join('')}</div>
+      <div class="tray-slots">${Array.from({ length: goal }, () => '<span class="slot"></span>').join('')}</div>
     </div>`, 'hunt');
   const field = $('.hunt-field');
   tap($('.home-btn'), () => { finished = true; home(); });
@@ -311,7 +314,7 @@ function hunt() {
     if (live < 4) {
       // Garante uma figura certa a cada 3 bolhas, no máximo.
       const isTarget = sinceTarget >= 2 || Math.random() < 0.42;
-      const item = isTarget ? { w: mine[turn++ % mine.length], L: L0 } : others[Math.floor(Math.random() * others.length)];
+      const item = isTarget ? { w: nextTarget(), L: L0 } : others[Math.floor(Math.random() * others.length)];
       sinceTarget = isTarget ? 0 : sinceTarget + 1;
       live++;
       const b = document.createElement('button');
@@ -327,7 +330,7 @@ function hunt() {
         if (b.classList.contains('hit') || finished) return;
         b.classList.add('hit');
         A.say(`w_${item.w.id}`, `n_${item.L}`);
-        if (item.L === L0) {
+        if (item.L === L0 && !got.includes(item.w)) {
           A.sfx.yay();
           const r = b.getBoundingClientRect();
           confetti(((r.left + r.width / 2) / innerWidth) * 100, ((r.top + r.height / 2) / innerHeight) * 100);
@@ -336,7 +339,10 @@ function hunt() {
           got.push(item.w);
           if (slot) { slot.innerHTML = pic(item.w); slot.classList.add('filled'); }
           setTimeout(gone, 500);
-          if (got.length >= HUNT_GOAL) done();
+          if (got.length >= goal) done();
+        } else if (item.L === L0) {
+          b.classList.add('caught'); // figura certa que já está na caçamba: só some
+          setTimeout(gone, 500);
         } else {
           A.sfx.boop();
           b.classList.add('nope');
