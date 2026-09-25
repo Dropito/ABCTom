@@ -5,6 +5,7 @@ import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
+export const APP_VERSION = '2026-09-24.8';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
@@ -637,6 +638,9 @@ function cfgTab() {
       <li><b>Jogo com o papai</b> (🗣️ na tela inicial): o Tom fala a letra e você marca ✓ ou ✗. Treina o “nomear”, que é o passo depois do “reconhecer”.</li>
       <li><b>Fora da tela:</b> depois de jogar, caça ao tesouro em casa — “vamos achar algo que começa com B?”.</li>
     </ul>
+    <h3>Som</h3>
+    <p class="p-note">Versão do app neste aparelho: <b>${APP_VERSION}</b> · áudio: <b>${A.audioCtx() ? A.audioCtx().state : 'ainda não iniciado'}</b></p>
+    <p><a class="chip" href="teste.html">🔊 Abrir o teste de som</a></p>
     <h3>Recomeçar</h3>
     <button class="danger reset">Zerar o progresso</button>
     <p class="p-note">As gravações de voz são mantidas.</p>`;

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teste de som</title>
+<style>
+  body { font: 18px -apple-system, system-ui, sans-serif; margin: 0; padding: 20px; background: #F6F7F9; color: #263238; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  p { color: #546E7A; margin: 0 0 16px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 760px; }
+  button { font: inherit; font-weight: 700; padding: 22px 14px; border: 0; border-radius: 14px; background: #1E88E5; color: #fff; }
+  button:active { opacity: .7; }
+  button.b2 { background: #43A047; } button.b3 { background: #FB8C00; } button.b4 { background: #8E24AA; }
+  #log { margin-top: 16px; background: #fff; border-radius: 12px; padding: 12px; font: 14px ui-monospace, Menlo, monospace; white-space: pre-wrap; max-width: 736px; min-height: 120px; }
+  .ok { color: #2E7D32; } .err { color: #C62828; }
+</style>
+</head>
+<body>
+<h1>Teste de som</h1>
+<p>Toque em cada botão, um de cada vez, e veja se ouve algo. Depois tire um print desta tela.</p>
+<div class="grid">
+  <button id="t1">1 · Bipe</button>
+  <button id="t2" class="b2">2 · Voz (jeito novo)</button>
+  <button id="t3" class="b3">3 · Voz (jeito antigo)</button>
+  <button id="t4" class="b4">4 · Voz do iPad</button>
+</div>
+<div id="log"></div>
+<script>
+  const out = document.getElementById('log');
+  const log = (msg, cls) => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = new Date().toLocaleTimeString() + '  ' + msg; out.prepend(d); };
+  let ctx;
+  const getCtx = () => { const AC = window.AudioContext || window.webkitAudioContext; if (!ctx && AC) ctx = new AC(); return ctx; };
+  const state = () => 'áudio: ' + (ctx ? ctx.state + ' ' + ctx.sampleRate + 'Hz' : 'nenhum');
+
+  log('Aparelho: ' + navigator.userAgent.replace(/^Mozilla\/5.0 /, ''));
+  log('Modo app (tela inicial): ' + (navigator.standalone ? 'sim' : 'não') + ' · audioSession: ' + (navigator.audioSession ? navigator.audioSession.type : 'não existe'));
+  fetch('js/app.js', { cache: 'no-store' }).then((r) => r.text()).then((t) => log('Versão do app no servidor: ' + ((t.match(/APP_VERSION = '([^']+)'/) || [])[1] || 'antiga'))).catch(() => {});
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) log('Modo offline ativo');
+
+  document.getElementById('t1').onclick = async () => {
+    try {
+      const c = getCtx();
+      await c.resume();
+      const o = c.createOscillator(), g = c.createGain();
+      o.frequency.value = 660; g.gain.value = 0.3;
+      o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime + 0.6);
+      log('Bipe enviado — ' + state(), c.state === 'running' ? 'ok' : 'err');
+    } catch (e) { log('Bipe ERRO: ' + e.name + ' ' + e.message, 'err'); }
+  };
+  document.getElementById('t2').onclick = async () => {
+    try {
+      const c = getCtx();
+      await c.resume();
+      const r = await fetch('audio/n_T.m4a');
+      log('Arquivo: HTTP ' + r.status + ' ' + (r.headers.get('content-type') || ''));
+      const ab = await r.arrayBuffer();
+      const buf = await new Promise((res, rej) => c.decodeAudioData(ab, res, rej));
+      const s = c.createBufferSource(); s.buffer = buf; s.connect(c.destination); s.start();
+      log('Voz (jeito novo) tocando ' + buf.duration.toFixed(2) + 's — ' + state(), c.state === 'running' ? 'ok' : 'err');
+    } catch (e) { log('Voz (jeito novo) ERRO: ' + (e && e.name) + ' ' + (e && e.message), 'err'); }
+  };
+  document.getElementById('t3').onclick = () => {
+    const a = new Audio('audio/n_T.m4a');
+    a.onended = () => log('Voz (jeito antigo) terminou', 'ok');
+    a.onerror = () => log('Voz (jeito antigo) ERRO de arquivo: ' + (a.error && a.error.code), 'err');
+    a.play().then(() => log('Voz (jeito antigo) tocando', 'ok')).catch((e) => log('Voz (jeito antigo) ERRO: ' + e.name + ' ' + e.message, 'err'));
+  };
+  document.getElementById('t4').onclick = () => {
+    if (!('speechSynthesis' in window)) return log('Sem voz sintética', 'err');
+    const u = new SpeechSynthesisUtterance('Tê, de trator');
+    u.lang = 'pt-BR';
+    u.onend = () => log('Voz do iPad terminou', 'ok');
+    u.onerror = (e) => log('Voz do iPad ERRO: ' + e.error, 'err');
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    log('Voz do iPad enviada (vozes: ' + speechSynthesis.getVoices().length + ')');
+  };
+</script>
+</body>
+</html>
