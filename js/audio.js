@@ -107,9 +107,52 @@ function playUrl(url) {
   });
 }
 
-function playOne(id) {
-  if (urls.has(id)) return playUrl(urls.get(id));
-  if (bundled.has(id)) return playUrl(`audio/${id}.m4a?v=${bundled.get(id)}`);
+// Vozes tocam pela Web Audio (buffer decodificado): no iPad isso evita as falhas do <audio>
+// com respostas do modo offline (Range) e toca na hora. O <audio> fica de reserva.
+const buffers = new Map(); // id -> Promise<AudioBuffer|null>
+let current = null;        // fonte tocando agora
+
+function clipSource(id) {
+  if (urls.has(id)) return urls.get(id);
+  if (bundled.has(id)) return `audio/${id}.m4a?v=${bundled.get(id)}`;
+  return null;
+}
+function loadBuffer(id) {
+  const src = clipSource(id);
+  if (!src || !ensureCtx()) return Promise.resolve(null);
+  const key = id + '|' + src;
+  if (!buffers.has(key)) {
+    buffers.set(key, fetch(src).then((r) => r.arrayBuffer())
+      .then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej)))
+      .catch(() => { buffers.delete(key); return null; }));
+  }
+  return buffers.get(key);
+}
+// Pré-carrega clipes (ex.: os da próxima rodada) para tocarem sem atraso.
+export function preload(...ids) { ids.flat().forEach(loadBuffer); }
+
+function playBuffer(buf) {
+  return new Promise((res) => {
+    let done = false;
+    const end = () => { if (!done) { done = true; res(); } };
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.onended = end;
+    current = src;
+    src.start();
+    setTimeout(end, buf.duration * 1000 + 400);
+  });
+}
+
+async function playOne(id) {
+  const src = clipSource(id);
+  if (src) {
+    if (ctx && ctx.state !== 'running') await Promise.race([ctx.resume().catch(() => {}), wait(300)]);
+    const buf = await loadBuffer(id);
+    if (buf && ctx && ctx.state === 'running') return playBuffer(buf);
+    return playUrl(src);
+  }
   const c = CLIP[id];
   return speak(c ? c.t : id);
 }
@@ -118,7 +161,12 @@ function playOne(id) {
 export async function say(...ids) {
   const my = ++token;
   stopVoice(false);
-  for (const id of ids.flat()) {
+  const list = ids.flat();
+  // No iPad o som só libera quando o dedo sai da tela: espera um pouco pelo desbloqueio.
+  for (let t = 0; t < 15 && !audioReady(); t++) await wait(100);
+  if (my !== token) return false;
+  preload(list);
+  for (const id of list) {
     if (my !== token) return false;
     await playOne(id);
     if (my !== token) return false;
@@ -129,6 +177,7 @@ export async function say(...ids) {
 export function stopVoice(bump = true) {
   if (bump) token++;
   try { player.pause(); } catch (e) { /* noop */ }
+  if (current) { try { current.stop(); } catch (e) { /* noop */ } current = null; }
   if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
 export const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -136,16 +185,34 @@ export const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // ---------- Efeitos (Web Audio, sem arquivos) ----------
 let ctx;
 export const audioCtx = () => ctx;
-export function unlockAudio() {
+function ensureCtx() {
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!ctx && AC) ctx = new AC();
-  if (ctx && ctx.state === 'suspended') ctx.resume();
-  // iOS: toca um silêncio no elemento de áudio dentro do gesto para liberá-lo.
-  if (!player.src) {
+  return ctx;
+}
+// iOS: o som só é liberado num gesto "completo" (touchend/click), não no toque inicial.
+// Chamado em todo toque; é barato depois da primeira vez.
+let unlocked = false;
+export function unlockAudio() {
+  // iOS 16.4+: trata o app como reprodução de mídia (toca mesmo com o iPad no silencioso).
+  try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch (e) { /* noop */ }
+  if (!ensureCtx()) return;
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
+  if (!unlocked) {
+    // Um buffer de silêncio tocado dentro do gesto destrava a Web Audio no Safari do iOS.
+    try {
+      const b = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = b; src.connect(ctx.destination); src.start(0);
+    } catch (e) { /* noop */ }
+    // E o <audio> de reserva também.
     player.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-    player.play().catch(() => {});
+    player.play().then(() => { unlocked = ctx.state === 'running'; }).catch(() => {});
+    if (ctx.state === 'running') unlocked = true;
   }
 }
+export const audioReady = () => !!ctx && ctx.state === 'running';
+['touchend', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, unlockAudio, true));
 
 function tone(freq, t0, dur, type = 'sine', vol = 0.18, slideTo) {
   if (!ctx) return;

@@ -1,5 +1,5 @@
 // Cache offline: tudo o que o app precisa fica no iPad.
-const V = 'abc-do-tom-v6';
+const V = 'abc-do-tom-v7';
 const FILES = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/data.js', 'js/art.js', 'js/audio.js', 'js/store.js', 'js/glyph.js', 'js/kz/engine.js', 'js/kz/objects1.js', 'js/kz/objects2.js', 'js/kz/icons.js',
   'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png'];
 
@@ -19,13 +19,34 @@ self.addEventListener('activate', (e) => {
     .then(() => self.clients.claim()));
 });
 // Rede primeiro (pega atualizações quando há internet), cache quando offline.
+// O Safari pede áudio em pedaços (Range): do cache, devolvemos o pedaço certo (206).
+async function fromCache(req) {
+  const hit = await caches.match(req, { ignoreSearch: true });
+  const range = req.headers.get('range');
+  if (!hit || !range) return hit;
+  const buf = await hit.arrayBuffer();
+  const m = /bytes=(\d*)-(\d*)/.exec(range) || [];
+  const start = m[1] ? parseInt(m[1], 10) : 0;
+  const end = m[2] ? Math.min(parseInt(m[2], 10), buf.byteLength - 1) : buf.byteLength - 1;
+  return new Response(buf.slice(start, end + 1), {
+    status: 206,
+    headers: {
+      'Content-Type': hit.headers.get('Content-Type') || 'audio/mp4',
+      'Content-Range': `bytes ${start}-${end}/${buf.byteLength}`,
+      'Content-Length': String(end - start + 1),
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
     fetch(e.request).then((r) => {
-      const copy = r.clone();
-      caches.open(V).then((c) => c.put(e.request, copy));
+      if (r.status === 200) {
+        const copy = r.clone();
+        caches.open(V).then((c) => c.put(e.request, copy)).catch(() => {});
+      }
       return r;
-    }).catch(() => caches.match(e.request, { ignoreSearch: true }))
+    }).catch(() => fromCache(e.request))
   );
 });
