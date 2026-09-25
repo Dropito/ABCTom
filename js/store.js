@@ -117,3 +117,19 @@ export function record(sess, target, firstTry) {
   save();
   return event;
 }
+
+// ---------- Caça às letras ----------
+// Letras especiais ficam fora: o som inicial engana (Hipopótamo soa I, Kart soa C...).
+export const HUNT_SKIP = 'HKQWY';
+export function pickHuntLetter() {
+  const pool = ORDER.filter((x) => L(x).level >= 1 && !HUNT_SKIP.includes(x));
+  if (!pool.length) return 'T';
+  // Preferência pelas que estão sendo aprendidas; evita repetir a última caçada.
+  const w = pool.map((x) => (x === state.lastHunt ? 0.2 : [0, 5, 4, 2, 1][L(x).level]));
+  let r = Math.random() * w.reduce((a, b) => a + b, 0);
+  const pick = pool.find((x, i) => (r -= w[i]) <= 0) || pool[0];
+  state.lastHunt = pick;
+  state.hunts = (state.hunts || 0) + 1;
+  save();
+  return pick;
+}

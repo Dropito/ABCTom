@@ -305,3 +305,44 @@ button { font: inherit; color: inherit; border: 0; background: none; cursor: poi
 .deco .rover { position: absolute; bottom: 26%; width: 10vmin; animation: roll 26s linear infinite; }
 .deco .r2 { width: 12vmin; animation-duration: 34s; animation-delay: -17s; }
 @keyframes roll { from { transform: translateX(-20vmin); left: 0; } to { transform: translateX(0); left: 100%; } }
+
+/* ---------- Caça às letras ---------- */
+.home .menu-row { gap: 3.5vmin; }
+.home .menu-row .btn { width: 19vmin; height: 19vmin; }
+.home .menu-row .btn .ico { width: 12vmin; height: 12vmin; }
+.home .btn.hunt-btn { display: flex; align-items: center; justify-content: center; }
+.hunt { justify-content: flex-start; }
+.hunt-target {
+  position: absolute; top: max(14px, env(safe-area-inset-top)); left: calc(50% - 10vmin);
+  width: 20vmin; height: 20vmin; background: #fff; border-radius: 4vmin; z-index: 3;
+  box-shadow: 0 1.2vmin 0 var(--c); animation: pulse 2s ease-in-out infinite;
+}
+.hunt-field { position: absolute; inset: 0; overflow: hidden; z-index: 2; }
+.bubble {
+  position: absolute; bottom: -30vmin; width: 22vmin; height: 22vmin; padding: 0;
+  animation: rise linear forwards;
+}
+@keyframes rise { to { transform: translateY(calc(-100vh - 34vmin)); } }
+.bubble .sway { display: block; width: 100%; height: 100%; animation: sway 3s ease-in-out infinite alternate; }
+@keyframes sway { from { transform: translateX(-2.5vmin) rotate(-4deg); } to { transform: translateX(2.5vmin) rotate(4deg); } }
+.bubble .pic { border-radius: 50%; box-shadow: 0 0 0 1vmin rgba(255,255,255,.7), 0 1.5vmin 3vmin rgba(10,10,42,.3); }
+.bubble.caught .sway { animation: caught .5s ease-in forwards; }
+@keyframes caught { to { transform: scale(1.4); opacity: 0; } }
+.bubble.nope .sway { animation: nope .7s ease forwards; }
+@keyframes nope { 20%, 60% { transform: translateX(-2vmin) rotate(-8deg); } 40%, 80% { transform: translateX(2vmin) rotate(8deg); } 100% { opacity: 0; transform: scale(.6); } }
+.hunt-tray {
+  position: absolute; bottom: max(10px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 1;
+  display: flex; align-items: flex-end; gap: 2vmin; padding: 1.5vmin 3vmin; border-radius: 4vmin; background: rgba(255,255,255,.35);
+}
+.tray-esc { width: 18vmin; }
+.tray-slots { display: flex; gap: 1.5vmin; margin-bottom: 1.5vmin; }
+.slot { width: 10vmin; height: 10vmin; border-radius: 2vmin; background: rgba(10,10,42,.2); border: .5vmin dashed rgba(255,255,255,.6); overflow: hidden; }
+.slot.filled { border: .5vmin solid #fff; animation: popin .5s cubic-bezier(.3,1.6,.5,1); }
+.slot .pic { border-radius: 0; box-shadow: none; }
+.hunt-tray.full { animation: jump .7s ease 2; }
+.hunt-end { display: flex; flex-direction: column; align-items: center; gap: 4vmin; }
+.hunt-end .bigletter { width: 32vmin; height: 32vmin; }
+.hunt-end .pics { flex-wrap: wrap; justify-content: center; max-width: 94vw; }
+.hunt-end .picbtn { width: 20vmin; height: 20vmin; }
+.hunt-done .btn { display: flex; align-items: center; justify-content: center; }
+.hunt-done .btn .ico { width: 12vmin; height: 12vmin; }

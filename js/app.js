@@ -5,7 +5,7 @@ import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
-export const APP_VERSION = '2026-09-24.8';
+export const APP_VERSION = '2026-09-24.9';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
@@ -77,6 +77,7 @@ function home() {
       <div class="menu-row">
         <button class="btn abc" aria-label="Letras"><span style="--c:#E53935">${glyph('A')}</span><span style="--c:#1E88E5">${glyph('B')}</span><span style="--c:#43A047">${glyph('C')}</span></button>
         <button class="btn garage-btn" aria-label="Garagem">${icon('🏠')}<small>${n}</small></button>
+        <button class="btn hunt-btn" aria-label="Caça às letras">${icon('🔍')}</button>
         <button class="btn dad" aria-label="Com o papai">${icon('🗣️')}</button>
       </div>
     </div>
@@ -85,6 +86,7 @@ function home() {
   tap($('.play'), () => session('kid'));
   tap($('.abc'), () => explore());
   tap($('.garage-btn'), () => garage());
+  tap($('.hunt-btn'), () => hunt());
   tap($('.dad'), () => session('dad'));
   tap($('.mascot'), () => { A.sfx.vroom(); A.say('p_oi'); });
   holdGate($('.gear'), parent);
@@ -278,6 +280,104 @@ function goodbye() {
   tap($('.garage-btn'), garage);
   A.sfx.yay();
   A.wait(400).then(() => alive(id) && A.say('p_tchau'));
+}
+
+// ---------------- Caça às letras ----------------
+// Figuras sobem como bolhas; o Tom toca nas que começam com a letra da caçada.
+// Todo toque fala "palavra… letra" (acertando ou não). 5 figuras certas enchem a caçamba.
+const HUNT_GOAL = 5;
+function hunt() {
+  const L0 = S.pickHuntLetter();
+  const mine = BY_LETTER[L0].words;
+  // Distratores: palavras de outras letras (sem as letras especiais, que confundem pelo som).
+  const others = LETTERS.filter((d) => d.L !== L0 && !S.HUNT_SKIP.includes(d.L)).flatMap((d) => d.words.map((w) => ({ w, L: d.L })));
+  const got = [];
+  let live = 0, sinceTarget = 0, finished = false;
+  // As figuras certas se revezam (todas aparecem), começando por uma aleatória.
+  let turn = Math.floor(Math.random() * mine.length);
+  const id = show(`${homeBtn}
+    <button class="hunt-target" ${letterStyle(L0)} aria-label="Ouvir de novo">${glyph(L0)}</button>
+    <div class="hunt-field"></div>
+    <div class="hunt-tray">
+      <div class="tray-esc">${ART.escavadeira()}</div>
+      <div class="tray-slots">${Array.from({ length: HUNT_GOAL }, () => '<span class="slot"></span>').join('')}</div>
+    </div>`, 'hunt');
+  const field = $('.hunt-field');
+  tap($('.home-btn'), () => { finished = true; home(); });
+  tap($('.hunt-target'), () => { A.sfx.pop(); A.say('p_caca', `n_${L0}`); });
+
+  const spawn = () => {
+    if (!alive(id) || finished) return;
+    if (live < 4) {
+      // Garante uma figura certa a cada 3 bolhas, no máximo.
+      const isTarget = sinceTarget >= 2 || Math.random() < 0.42;
+      const item = isTarget ? { w: mine[turn++ % mine.length], L: L0 } : others[Math.floor(Math.random() * others.length)];
+      sinceTarget = isTarget ? 0 : sinceTarget + 1;
+      live++;
+      const b = document.createElement('button');
+      b.className = 'bubble';
+      b.dataset.l = item.L;
+      const dur = 9 + Math.random() * 3;
+      b.style.left = `${6 + Math.random() * 70}%`;
+      b.style.animationDuration = `${dur}s`;
+      b.innerHTML = `<span class="sway" style="animation-delay:-${(Math.random() * 3).toFixed(1)}s">${pic(item.w)}</span>`;
+      const gone = () => { if (b.isConnected) { b.remove(); live--; } };
+      b.addEventListener('animationend', (e) => { if (e.target === b) gone(); });
+      tap(b, () => {
+        if (b.classList.contains('hit') || finished) return;
+        b.classList.add('hit');
+        A.say(`w_${item.w.id}`, `n_${item.L}`);
+        if (item.L === L0) {
+          A.sfx.yay();
+          const r = b.getBoundingClientRect();
+          confetti(((r.left + r.width / 2) / innerWidth) * 100, ((r.top + r.height / 2) / innerHeight) * 100);
+          b.classList.add('caught');
+          const slot = app.querySelectorAll('.slot')[got.length];
+          got.push(item.w);
+          if (slot) { slot.innerHTML = pic(item.w); slot.classList.add('filled'); }
+          setTimeout(gone, 500);
+          if (got.length >= HUNT_GOAL) done();
+        } else {
+          A.sfx.boop();
+          b.classList.add('nope');
+          setTimeout(gone, 700);
+        }
+      });
+      field.appendChild(b);
+    }
+    setTimeout(spawn, 1500 + Math.random() * 600);
+  };
+
+  const done = async () => {
+    finished = true;
+    await A.wait(1600);
+    if (!alive(id)) return;
+    field.querySelectorAll('.bubble').forEach((b) => b.classList.add('nope'));
+    A.sfx.fanfare();
+    confetti(50, 70);
+    $('.hunt-tray').classList.add('full');
+    await A.say('p_cheia');
+    if (!alive(id)) return;
+    const end = show(`
+      <div class="hunt-end">
+        <div class="bigletter pop-in" ${letterStyle(L0)}>${glyph(L0)}</div>
+        <div class="pics">${got.map((w) => `<button class="picbtn" data-id="${w.id}">${pic(w)}</button>`).join('')}</div>
+        <div class="menu-row">
+          <button class="btn home2" aria-label="Início">${icon('🏠')}</button>
+          <button class="btn again" aria-label="Caçar de novo">${icon('🔍')}</button>
+        </div>
+      </div>`, 'hunt-done');
+    tap($('.home2'), home);
+    tap($('.again'), hunt);
+    app.querySelectorAll('.picbtn').forEach((b) => tap(b, () => {
+      b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle');
+      A.say(`w_${b.dataset.id}`, `n_${L0}`);
+    }));
+    A.wait(300).then(() => alive(end) && A.say(`n_${L0}`, `d_${L0}`));
+  };
+
+  A.preload('p_caca', `n_${L0}`, mine.map((w) => `w_${w.id}`));
+  A.wait(300).then(() => alive(id) && A.say('p_caca', `n_${L0}`)).then(() => alive(id) && spawn());
 }
 
 // ---------------- Garagem ----------------

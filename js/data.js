@@ -90,6 +90,8 @@ export const PHRASES = [
   { id: 'p_qual', t: 'Que letra é essa?', label: '“Que letra é essa?” (jogo com o papai)' },
   { id: 'p_garagem', t: 'Chegou um novo na garagem!', label: '“Chegou um novo na garagem!”' },
   { id: 'p_tchau', t: 'A escavadeira cansou. Tchau, Tom! Até amanhã!', label: 'Fim — “A escavadeira cansou, tchau!”' },
+  { id: 'p_caca', t: 'Vamos caçar o', label: 'Caça — “Vamos caçar o…” (antes do nome da letra)' },
+  { id: 'p_cheia', t: 'A caçamba encheu! Muito bem!', label: 'Caça — “A caçamba encheu! Muito bem!”' },
   { id: 'p_oi', t: 'Oi, Tom! Vamos brincar com as letras?', label: 'Abertura — “Oi, Tom! Vamos brincar?”' },
 ];
 
