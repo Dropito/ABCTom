@@ -5,13 +5,14 @@ import { OBJ1 } from './kz/objects1.js';
 import { OBJ2, mascot } from './kz/objects2.js';
 import { OBJ3 } from './kz/objects3.js';
 import { OBJ4 } from './kz/objects4.js';
+import { OBJ5 } from './kz/objects5.js';
 
-const OBJ = { ...OBJ1, ...OBJ2, ...OBJ3, ...OBJ4 };
+const OBJ = { ...OBJ1, ...OBJ2, ...OBJ3, ...OBJ4, ...OBJ5 };
 const SIZE = 300;
 const FILL = 0.8;              // fração do quadro ocupada pelo lado maior do objeto
 const BG = '#DCEEFF';          // fundo liso padrão (azul-céu claro)
 const BG_WARM = '#FFEFD2';     // para objetos predominantemente azuis ou brancos-azulados
-const WARM = new Set(['caminhao', 'quebracabeca', 'ziper', 'olho', 'elevador', 'navio', 'veleiro', 'iate', 'lancha', 'windsurf', 'nuvem', 'foca', 'hipopotamo', 'pato', 'submarino', 'yoga', 'bone', 'mochila', 'diamante', 'iglu', 'fantasma', 'envelope', 'ovelha', 'igreja', 'lua', 'ema', 'nave', 'zepelim', 'copo', 'jarra']);
+const WARM = new Set(['caminhao', 'quebracabeca', 'ziper', 'olho', 'elevador', 'navio', 'veleiro', 'iate', 'lancha', 'windsurf', 'nuvem', 'foca', 'hipopotamo', 'pato', 'submarino', 'yoga', 'bone', 'mochila', 'diamante', 'iglu', 'fantasma', 'envelope', 'ovelha', 'igreja', 'lua', 'ema', 'nave', 'zepelim', 'copo', 'jarra', 'baleia', 'golfinho', 'tubarao', 'ambulancia', 'kombi', 'morcego', 'pinguim', 'panda', 'coelho']);
 
 // Faixa de água do tamanho do objeto (linha d'água em y=180 na caixa do objeto).
 function waves(k, x0, x1) {

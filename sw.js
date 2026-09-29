@@ -1,6 +1,6 @@
 // Cache offline: tudo o que o app precisa fica no iPad.
-const V = 'abc-do-tom-v13';
-const FILES = ['./', 'index.html', 'teste.html', 'css/app.css', 'js/app.js', 'js/data.js', 'js/art.js', 'js/audio.js', 'js/store.js', 'js/glyph.js', 'js/kz/engine.js', 'js/kz/objects1.js', 'js/kz/objects2.js', 'js/kz/icons.js', 'js/kz/objects3.js', 'js/kz/objects4.js',
+const V = 'abc-do-tom-v14';
+const FILES = ['./', 'index.html', 'teste.html', 'css/app.css', 'js/app.js', 'js/data.js', 'js/art.js', 'js/audio.js', 'js/store.js', 'js/glyph.js', 'js/kz/engine.js', 'js/kz/objects1.js', 'js/kz/objects2.js', 'js/kz/icons.js', 'js/kz/objects3.js', 'js/kz/objects4.js', 'js/kz/objects5.js',
   'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {

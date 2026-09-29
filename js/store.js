@@ -1,5 +1,5 @@
 // Progresso do Tom (localStorage) e motor de repetição espaçada.
-import { LETTERS, ORDER, SEED, CONFUSABLE, BY_LETTER } from './data.js';
+import { LETTERS, ORDER, SEED, CONFUSABLE, BY_LETTER, allWords } from './data.js';
 
 const KEY = 'abc-do-tom:v1';
 const today = () => new Date().toISOString().slice(0, 10);
@@ -90,7 +90,7 @@ export function nextRound(sess, mode = 'kid') {
   const opts = shuffle([target, ...known.concat(rest).slice(0, n - 1)]);
 
   const canPic = s.level >= 2 && Math.random() < 0.45;
-  const word = canPic ? shuffle([...BY_LETTER[target].words])[0] : null;
+  const word = canPic ? shuffle([...allWords(BY_LETTER[target])])[0] : null;
   return { type: canPic ? 'pic' : 'find', target, opts, word };
 }
 

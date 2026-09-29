@@ -5,7 +5,7 @@ import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
-export const APP_VERSION = '2026-09-29.1';
+export const APP_VERSION = '2026-09-29.2';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
@@ -427,7 +427,7 @@ function card(x) {
     <button class="arrow prev" aria-label="Anterior">${SHAPES.prev}</button>
     <button class="arrow next" aria-label="Próxima">${SHAPES.next}</button>
     <button class="bigletter pop-in" ${letterStyle(x)}>${glyph(x)}</button>
-    <div class="pics">${d.words.map((w, j) => `<button class="picbtn" data-j="${j}">${pic(w)}</button>`).join('')}</div>`, 'card');
+    <div class="pics strip">${allWords(d).map((w, j) => `<button class="picbtn" data-j="${j}">${pic(w)}</button>`).join('')}</div>`, 'card');
   tap($('.home-btn'), home);
   tap($('.back-btn'), explore);
   tap($('.prev'), () => card(LETTERS[(i + LETTERS.length - 1) % LETTERS.length].L));
@@ -435,7 +435,7 @@ function card(x) {
   tap($('.bigletter'), () => { A.sfx.pop(); A.say(`n_${x}`, `d_${x}`); });
   app.querySelectorAll('.picbtn').forEach((b) => tap(b, () => {
     b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle');
-    A.say(`w_${d.words[b.dataset.j].id}`);
+    A.say(...deClips(x, allWords(d)[b.dataset.j]));
   }));
   A.wait(200).then(() => alive(id) && A.say(`n_${x}`, `d_${x}`));
 }
