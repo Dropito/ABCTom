@@ -8,7 +8,11 @@ export const OBJ2 = {
     k.p('M72 96 Q76 84 96 84 L122 86 Q132 96 126 112 L74 114Z', k.G('red')) +
     k.p('M40 100 L78 98 L82 110 L44 114Z', k.G('black')) +
     k.p('M130 88 L146 84 L150 96 L136 100Z', '#fff6b0') +
-    k.r(50, 136, 60, 8, k.G('metal', 'h'), 4) },
+    k.r(50, 136, 60, 8, k.G('metal', 'h'), 4) +
+    // piloto: perna até a pedaleira, tronco inclinado, braço no guidão, capacete com viseira
+    k.bar(70, 100, 98, 104, 11, '#2a50c0') + k.bar(98, 104, 96, 128, 10, '#2a50c0') + k.e(100, 130, 9, 5, '#1a1040') +
+    k.bar(66, 100, 84, 62, 18, '#3a70e0') + k.bar(84, 68, 124, 82, 8, '#2a50c0') + k.c(125, 82, 5, k.G('skin')) +
+    k.c(92, 48, 15, k.G('red')) + k.p('M96 42 L108 44 Q110 54 102 56 L94 54Z', k.lg(['#a0e0ff', '#2a60a0'], 'd')) },
 
   macaco: { draw: (k) => {
     const f = k.G('brown');
@@ -48,7 +52,7 @@ export const OBJ2 = {
   onibus: { s: 0.84, draw: (k) =>
     k.r(4, 70, 192, 86, k.G('yellow'), 12) + k.r(4, 70, 192, 8, '#fff6b0', 6, 0.8) +
     [16, 50, 84, 118].map((x) => k.r(x, 84, 28, 28, k.G('glass'), 4)).join('') +
-    k.r(154, 84, 32, 56, k.G('glass'), 4) + k.r(168, 84, 2, 56, '#2a5aa0') +
+    k.cab('M154 84 L186 84 L186 140 L154 140Z', 166, 100, 7, '#3a2a1a') + k.r(168, 84, 2, 56, '#2a5aa0') +
     k.r(4, 124, 150, 8, k.G('orange', 'h')) + k.r(186, 138, 10, 10, '#fff6dc', 3) +
     k.wheel(46, 160, 20) + k.wheel(150, 160, 20) },
 
@@ -75,7 +79,7 @@ export const OBJ2 = {
     k.r(44, 62, 84, 50, k.G('white'), 20) + k.r(76, 54, 20, 10, k.G('gray'), 3) + k.r(52, 70, 60, 8, '#ffffff', 4, 0.6) +
     // cabine
     k.p('M130 112 L130 50 Q130 42 138 42 L170 42 Q178 42 180 50 L186 112Z', k.G('green')) +
-    k.p('M138 52 L170 52 L176 88 L138 88Z', k.G('glass')) + k.r(126, 38, 58, 7, k.G('green', 'v'), 3) +
+    k.cab('M138 52 L170 52 L176 88 L138 88Z', 151, 67, 8, '#e0303a') + k.r(126, 38, 58, 7, k.G('green', 'v'), 3) +
     // rodas dianteiras (na frente), finas e altas
     k.r(52, 128, 16, 62, k.G('tire', 'h'), 8) + k.r(58, 150, 4, 18, k.G('metal'), 2) +
     k.r(166, 128, 16, 62, k.G('tire', 'h'), 8) + k.r(172, 150, 4, 18, k.G('metal'), 2) },
@@ -115,7 +119,7 @@ export const OBJ2 = {
     k.bar(150, 124, 178, 60, 12, '#ffb020') + k.bar(178, 60, 196, 118, 9, '#ffb020') +
     k.p('M188 112 L204 118 L198 138 Q188 140 184 128Z', k.G('gray')) +
     k.p('M50 150 L50 118 L86 118 L86 70 Q86 62 94 62 L128 62 Q136 62 136 70 L136 118 L158 118 L158 150Z', k.G('yellow')) +
-    k.p('M96 72 L126 72 L126 110 L96 110Z', k.G('glass')) +
+    k.cab('M96 72 L126 72 L126 110 L96 110Z', 107, 88, 8, '#ffc21a') +
     k.wheel(72, 156, 20) + k.wheel(136, 150, 28) },
 
   rato: { draw: (k) =>
@@ -159,7 +163,7 @@ export const OBJ2 = {
   trator: { draw: (k) =>
     k.r(40, 40, 8, 40, k.G('gray', 'h'), 3) +
     k.p('M30 150 L30 104 Q30 96 38 96 L100 96 L100 50 Q100 42 108 42 L150 42 Q158 42 158 50 L158 110 L190 116 Q196 118 196 126 L196 150Z', k.G('green')) +
-    k.p('M110 52 L148 52 L148 94 L110 94Z', k.G('glass')) +
+    k.cab('M110 52 L148 52 L148 94 L110 94Z', 124, 69, 8.5, '#e0303a') +
     k.r(158, 120, 36, 8, k.G('yellow', 'h'), 3) +
     k.wheel(56, 150, 40) + k.wheel(170, 164, 24) +
     k.p('M130 46 Q150 46 154 64 Q142 54 130 52Z', '#ffffff', 0.5) },
@@ -303,19 +307,34 @@ export const OBJ2 = {
     k.bar(140, 40, 186, 4, 7, '#8a4a2a') + k.c(186, 4, 12, k.G('cream')) },
 };
 
-// Mascote: escavadeira sem contorno, com olhinhos. eyes=false → dormindo.
+// Mascote: escavadeira realista (esteira, contrapeso, lança curva com cilindros, caçamba dentada)
+// com o operador na cabine. eyes=false → operador cochilando (tela de despedida).
 export function mascot(k, eyes = true) {
-  const arm = k.G('yellow');
-  return k.g('', k.bar(118, 92, 158, 40, 16, '#f0a010') + k.bar(158, 40, 190, 92, 12, '#ffc020') + k.c(158, 40, 7, k.G('gray')) +
-      k.p('M180 86 L206 90 L200 116 Q188 124 176 110Z', k.G('gray')), 'class="esc-arm"') +
-    k.r(18, 116, 124, 32, k.G('tire', 'v'), 16) +
-    [36, 62, 88, 114].map((x) => k.c(x, 132, 9, k.G('metal'))).join('') +
-    k.r(26, 86, 104, 30, k.G('yellow'), 8) + k.r(26, 104, 104, 6, '#d07a10', 0, 0.6) +
-    k.p('M40 88 L40 44 Q40 38 46 38 L84 38 Q92 38 94 46 L102 88Z', k.G('yellow')) +
-    k.p('M50 48 L82 48 Q86 48 87 52 L92 80 L50 80Z', k.G('glass')) +
-    (eyes
-      ? k.g('', k.e(62, 63, 7, 9, '#ffffff') + k.e(80, 63, 7, 9, '#ffffff') + k.c(64, 65, 3.6, '#141430') + k.c(82, 65, 3.6, '#141430'), 'class="eyes"') +
-        k.p('M62 73 Q71 80 80 73 Q71 77 62 73Z', '#141430')
-      : k.p('M55 63 Q61 69 67 63 L67 65 Q61 71 55 65Z', '#141430') + k.p('M74 63 Q80 69 86 63 L86 65 Q80 71 74 65Z', '#141430') + k.c(71, 74, 3, '#141430')) +
-    k.p('M84 40 Q94 42 96 54 L100 84 L94 50 Q92 44 84 42Z', '#ffffff', 0.4);
+  const Y = k.G('yellow'), Ydark = k.lg(['#f0a010', '#b86a08'], 'd');
+  const cyl = (x1, y1, x2, y2, w) => k.bar(x1, y1, x2, y2, w, '#3a4270') + k.bar(x1 + (x2 - x1) * 0.45, y1 + (y2 - y1) * 0.45, x2, y2, w * 0.45, '#e8eeff');
+  const arm =
+    cyl(126, 102, 164, 56, 8) +
+    k.p('M130 94 L146 74 L184 24 Q190 18 196 24 L200 32 L156 94Z', Y) + k.p('M156 94 L200 32 L196 26 L150 90Z', Ydark, 0.7) +
+    cyl(184, 32, 208, 88, 5) +
+    k.bar(194, 30, 206, 104, 13, '#f0a010') + k.c(194, 30, 6, k.G('gray')) +
+    k.p('M196 98 L216 102 L212 130 Q200 140 186 128 L190 110Z', k.lg(['#8a94b8', '#3a4270'], 'd')) +
+    [188, 196, 204].map((x, i) => k.p(`M${x} ${130 + i * 2} L${x + 4} ${140 + i} L${x + 8} ${131 + i * 2}Z`, '#e8eeff')).join('') +
+    k.c(140, 86, 6, k.G('gray'));
+  const track =
+    k.r(10, 116, 144, 36, k.G('tire', 'v'), 18) +
+    Array.from({ length: 17 }, (_, i) => k.r(18 + i * 8, 116, 4, 4, '#5a5a80')).join('') +
+    Array.from({ length: 17 }, (_, i) => k.r(18 + i * 8, 148, 4, 4, '#5a5a80')).join('') +
+    k.c(30, 134, 11, k.G('gray')) + k.c(30, 134, 4, '#2a2a4a') +
+    k.c(134, 134, 11, k.G('gray')) + Array.from({ length: 8 }, (_, i) => k.g(`rotate(${i * 45} 134 134)`, k.r(132, 121, 4, 5, '#8a94b8'))).join('') + k.c(134, 134, 4, '#2a2a4a') +
+    [56, 82, 108].map((x) => k.c(x, 140, 6, k.G('gray'))).join('');
+  const house =
+    k.r(44, 106, 76, 12, k.G('black', 'v'), 3) +
+    k.p('M14 112 L14 90 Q14 74 30 74 L150 74 L150 112Z', Y) +
+    k.r(14, 104, 136, 8, '#c07a10', 0, 0.55) +
+    [22, 29, 36, 43].map((x) => k.r(x, 80, 3, 18, '#b86a08', 1, 0.7)).join('') +
+    k.r(50, 58, 6, 18, k.G('black', 'h'), 2) +
+    k.p('M68 76 L68 30 Q68 20 78 20 L108 20 Q114 20 116 26 L124 76Z', Y) +
+    k.cab('M76 28 L106 28 Q110 28 111 32 L117 70 L76 70Z', 92, 44, 8, '#ffc21a', !eyes) +
+    k.r(68, 70, 56, 6, '#c07a10', 0, 0.6) + k.p('M108 22 Q116 24 118 36 L124 74 L118 40 Q116 28 108 26Z', '#ffffff', 0.35);
+  return k.g('', arm, 'class="esc-arm"') + track + house;
 }

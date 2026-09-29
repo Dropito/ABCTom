@@ -54,6 +54,25 @@ export function kit(prefix = 'g') {
   k.wheel = (x, y, r) => k.c(x, y, r, k.G('tire')) + k.c(x, y, r * 0.56, k.G('metal')) + k.c(x, y, r * 0.22, '#3a4270') + k.c(x + r * 0.2, y - r * 0.2, r * 0.1, '#fff', 0.8);
   k.eye = (x, y, r, look = 0.3) => k.c(x, y, r, k.G('white')) + k.c(x + r * look, y + r * 0.1, r * 0.55, '#141430') + k.c(x + r * look + r * 0.2, y - r * 0.15, r * 0.2, '#fff');
   k.shadow = (x, y, rx, ry = 6, o = 0.35) => k.e(x, y, rx, ry, '#0a1a3a', o);
+  // Janela de cabine com piloto dentro (de perfil, olhando para a direita):
+  // interior escuro → piloto recortado pela janela → vidro translúcido por cima.
+  // d = contorno da janela; (cx, cy) = centro da cabeça; r = raio da cabeça; hat = cor do capacete/cabelo.
+  k.cab = (d, cx, cy, r, hat = '#ffc21a', asleep = false) => {
+    const shirt = k.G('blue');
+    const tilt = asleep ? `rotate(18 ${cx} ${cy + r})` : '';
+    const person =
+      k.e(cx - r * 0.2, cy + r * 2.3, r * 1.6, r * 1.4, shirt) +
+      (asleep ? '' : k.bar(cx + r * 0.4, cy + r * 1.9, cx + r * 2.2, cy + r * 1.7, r * 0.55, '#2a50c0') + k.c(cx + r * 2.3, cy + r * 1.7, r * 0.35, k.G('skin'))) +
+      k.g(tilt,
+        k.c(cx, cy, r, k.G('skin')) +
+        k.p(`M${cx - r * 1.12} ${cy - r * 0.05} Q${cx - r * 1.1} ${cy - r * 1.3} ${cx} ${cy - r * 1.3} Q${cx + r * 1.1} ${cy - r * 1.3} ${cx + r * 1.12} ${cy - r * 0.05}Z`, hat) +
+        k.r(cx - r * 0.2, cy - r * 0.2, r * 1.6, r * 0.28, hat, r * 0.14) +
+        (asleep ? k.r(cx + r * 0.3, cy + r * 0.25, r * 0.45, r * 0.12, '#141430') : k.c(cx + r * 0.55, cy + r * 0.3, r * 0.17, '#141430')) +
+        k.c(cx + r * 0.95, cy + r * 0.5, r * 0.18, '#e8a070'));
+    return k.p(d, k.lg(['#3a4a80', '#141430'], 'v')) +
+      `<g ${k.clip(`<path d="${d}"/>`)}>${person}</g>` +
+      k.p(d, k.lg([['#e0f8ff', 0, 0.5], ['#4aa8e8', 1, 0.18]], 'd'));
+  };
   return k;
 }
 
@@ -177,7 +196,6 @@ export function backdrop(night = false) {
     out += k.c(1250, 170, 46, '#e8eeff') + k.c(1270, 158, 42, '#1a1050');
   } else {
     out += k.r(0, 0, W, H, k.lg([['#1a3a8a', 0], ['#3f68d0', 0.4], ['#ffe8b0', 0.72], ['#ffe8b0', 1]], 'v'));
-    out += k.c(1300, 130, 90, '#fff4c8', 0.08) + k.c(1300, 130, 60, '#fff4c8', 0.16) + k.c(1300, 130, 38, '#fffbe8');
   }
   const far = night ? k.lg(['#2a1a5a', '#1a1040'], 'v') : k.lg(['#d89868', '#ecc488'], 'v');
   out += k.p('M0 640 L120 640 L150 560 L420 560 L450 640 L860 640 L884 600 L1120 600 L1150 640 L1600 640 L1600 780 L0 780Z', far, 0.95);

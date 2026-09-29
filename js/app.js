@@ -5,7 +5,7 @@ import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
-export const APP_VERSION = '2026-09-29.2';
+export const APP_VERSION = '2026-09-29.3';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
@@ -102,11 +102,22 @@ const BLOCKS = [
   ['A', 86, 30, '#1E88E5', 10], ['B', 76, 50, '#8E24AA', -9], ['C', 90, 60, '#00897B', 6],
   ['Z', 24, 12, '#F9A825', 14], ['E', 72, 14, '#D81B60', -14],
 ];
+// Trânsito da tela inicial: máquinas no horizonte, carros ao fundo (sentido contrário) e o céu.
+const TRAFFIC = [
+  ['trator', 'near'], ['betoneira', 'near'], ['retroescavadeira', 'near'], ['pulverizador', 'near'],
+  ['caminhao', 'near'], ['colheitadeira', 'near'], ['rolo', 'near'],
+  ['onibus', 'far'], ['ambulancia', 'far'], ['kombi', 'far'], ['guincho', 'far'], ['jipe', 'far'],
+  ['aviao', 'sky'], ['helicoptero', 'sky2'], ['zepelim', 'sky3'],
+];
+const LANE_S = { near: 42, far: 60, sky: 34, sky2: 48, sky3: 90 }; // duração da travessia (s)
 function homeDeco() {
   return `<div class="deco" aria-hidden="true">
     <img class="cloud c1" src="${bareUrl('nuvem')}" alt=""><img class="cloud c2" src="${bareUrl('nuvem')}" alt=""><img class="cloud c3" src="${bareUrl('nuvem')}" alt="">
     ${BLOCKS.map(([L, x, y, c, r], i) => `<span class="block" style="left:${x}%;top:${y}%;--c:#fff;--b:${c};--r:${r}deg;animation-delay:-${i * 0.7}s">${glyph(L)}</span>`).join('')}
-    <img class="rover r1" src="${bareUrl('trator')}" alt=""><img class="rover r2" src="${bareUrl('betoneira')}" alt="">
+    ${TRAFFIC.map(([id, lane], i, all) => {
+      const n = all.filter((t) => t[1] === lane).length, j = all.slice(0, i).filter((t) => t[1] === lane).length;
+      return `<img class="rover ${lane}" style="animation-delay:-${((j / n) * LANE_S[lane]).toFixed(1)}s" src="${bareUrl(id)}" alt="">`;
+    }).join('')}
   </div>`;
 }
 
