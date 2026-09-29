@@ -73,7 +73,6 @@ export const OBJ2 = {
     k.r(0, 120, 200, 7, k.G('gray', 'h'), 3) + k.p('M0 120 L60 100 L140 100 L200 120 L194 120 L138 106 L62 106 L6 120Z', k.G('gray')) +
     [8, 36, 64, 136, 164, 192].map((x) => k.r(x - 3, 126, 6, 6, '#3a4270', 2)).join('') +
     // rodas traseiras (atrás) e chassi alto
-    k.r(30, 132, 14, 52, k.G('tire', 'h'), 7) + k.r(150, 132, 14, 52, k.G('tire', 'h'), 7) +
     k.r(34, 112, 138, 16, k.G('green', 'v'), 5) +
     // tanque
     k.r(44, 62, 84, 50, k.G('white'), 20) + k.r(76, 54, 20, 10, k.G('gray'), 3) + k.r(52, 70, 60, 8, '#ffffff', 4, 0.6) +
@@ -81,8 +80,9 @@ export const OBJ2 = {
     k.p('M130 112 L130 50 Q130 42 138 42 L170 42 Q178 42 180 50 L186 112Z', k.G('green')) +
     k.cab('M138 52 L170 52 L176 88 L138 88Z', 151, 67, 8, '#e0303a') + k.r(126, 38, 58, 7, k.G('green', 'v'), 3) +
     // rodas dianteiras (na frente), finas e altas
-    k.r(52, 128, 16, 62, k.G('tire', 'h'), 8) + k.r(58, 150, 4, 18, k.G('metal'), 2) +
-    k.r(166, 128, 16, 62, k.G('tire', 'h'), 8) + k.r(172, 150, 4, 18, k.G('metal'), 2) },
+    // pernas do chassi alto até o cubo das rodas (vão livre para passar sobre a lavoura)
+    k.r(54, 124, 10, 40, k.G('gray', 'h'), 3) + k.r(160, 124, 10, 40, k.G('gray', 'h'), 3) +
+    k.wheel(59, 164, 26) + k.wheel(165, 164, 26) },
 
   pato: { env: 'water', s: 0.86, draw: (k) =>
     k.p('M20 150 Q20 110 70 112 L120 116 Q150 100 150 76 Q150 40 118 40 Q88 42 88 76 Q90 96 104 110 L70 112 Q40 110 20 150 Q30 186 100 186 Q170 186 176 150 Q176 124 150 116Z', k.G('yellow')) +

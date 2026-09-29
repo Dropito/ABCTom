@@ -17,7 +17,7 @@ export const PAL = {
 const DIRS = { d: [1, 0, 0, 1], v: [0, 0, 0, 1], h: [0, 0, 1, 0], l: [1, 0, 0, 0], u: [0, 1, 0, 0], r: [0, 0, 1, 1] };
 
 // Kit de desenho de uma imagem: cada imagem tem seus próprios ids de gradiente.
-export function kit(prefix = 'g') {
+export function kit(prefix = 'g', spin = false) {
   let n = 0;
   const defs = [];
   const lg = (stops, dir = 'd') => {
@@ -51,7 +51,16 @@ export function kit(prefix = 'g') {
       return `<path d="M${x1 + dx} ${y1 + dy} L${x2 + dx} ${y2 + dy} L${x2 - dx} ${y2 - dy} L${x1 - dx} ${y1 - dy}Z" fill="${f}"/>`;
     },
   };
-  k.wheel = (x, y, r) => k.c(x, y, r, k.G('tire')) + k.c(x, y, r * 0.56, k.G('metal')) + k.c(x, y, r * 0.22, '#3a4270') + k.c(x + r * 0.2, y - r * 0.2, r * 0.1, '#fff', 0.8);
+  // Roda: pneu e aro fixos; sulcos e parafusos giram quando o kit é criado com spin=true
+  // (veículos em movimento na tela inicial). Período ∝ raio → mesma "velocidade de chão".
+  k.wheel = (x, y, r) => {
+    const tread = Array.from({ length: 10 }, (_, i) => k.g(`rotate(${i * 36} ${x} ${y})`, k.r(x - r * 0.09, y - r, r * 0.18, r * 0.2, '#262648')));
+    const bolts = Array.from({ length: 5 }, (_, i) => { const a = (i / 5) * Math.PI * 2; return k.c(x + Math.cos(a) * r * 0.36, y + Math.sin(a) * r * 0.36, r * 0.07, '#3a4270'); });
+    const anim = spin ? `<animateTransform attributeName="transform" type="rotate" from="0 ${x} ${y}" to="360 ${x} ${y}" dur="${(r * 0.05).toFixed(2)}s" repeatCount="indefinite"/>` : '';
+    return k.c(x, y, r, k.G('tire')) + k.c(x, y, r * 0.56, k.G('metal')) +
+      `<g>${tread.join('')}${bolts.join('')}${k.c(x, y, r * 0.18, '#3a4270')}${anim}</g>` +
+      k.c(x + r * 0.22, y - r * 0.22, r * 0.1, '#fff', 0.7);
+  };
   k.eye = (x, y, r, look = 0.3) => k.c(x, y, r, k.G('white')) + k.c(x + r * look, y + r * 0.1, r * 0.55, '#141430') + k.c(x + r * look + r * 0.2, y - r * 0.15, r * 0.2, '#fff');
   k.shadow = (x, y, rx, ry = 6, o = 0.35) => k.e(x, y, rx, ry, '#0a1a3a', o);
   // Janela de cabine com piloto dentro (de perfil, olhando para a direita):

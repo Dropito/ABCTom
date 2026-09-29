@@ -5,7 +5,7 @@ import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
-export const APP_VERSION = '2026-09-29.3';
+export const APP_VERSION = '2026-09-29.4';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
@@ -116,7 +116,7 @@ function homeDeco() {
     ${BLOCKS.map(([L, x, y, c, r], i) => `<span class="block" style="left:${x}%;top:${y}%;--c:#fff;--b:${c};--r:${r}deg;animation-delay:-${i * 0.7}s">${glyph(L)}</span>`).join('')}
     ${TRAFFIC.map(([id, lane], i, all) => {
       const n = all.filter((t) => t[1] === lane).length, j = all.slice(0, i).filter((t) => t[1] === lane).length;
-      return `<img class="rover ${lane}" style="animation-delay:-${((j / n) * LANE_S[lane]).toFixed(1)}s" src="${bareUrl(id)}" alt="">`;
+      return `<img class="rover ${lane}" style="animation-delay:-${((j / n) * LANE_S[lane]).toFixed(1)}s" src="${bareUrl(id, true)}" alt="">`;
     }).join('')}
   </div>`;
 }

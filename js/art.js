@@ -39,9 +39,9 @@ function measure(inner) {
   return b;
 }
 
-export function objectSvg(id, withBg = true) {
+export function objectSvg(id, withBg = true, spin = false) {
   const o = OBJ[id];
-  const k = kit();
+  const k = kit('g', spin);
   let body = o.draw(k);
   if (o.env === 'water') {
     const ob = measure(`<defs>${k.defs.join('')}</defs><g>${body}</g>`);
@@ -62,10 +62,12 @@ export function objectSvg(id, withBg = true) {
   return doc(SIZE, SIZE, k, bg + shadow + obj);
 }
 
+// Sem fundo (enfeites da tela inicial); spin=true faz as rodas girarem.
 const bare = new Map();
-export function bareUrl(id) {
-  if (!bare.has(id)) bare.set(id, toUrl(objectSvg(id, false)));
-  return bare.get(id);
+export function bareUrl(id, spin = false) {
+  const key = id + (spin ? '*' : '');
+  if (!bare.has(key)) bare.set(key, toUrl(objectSvg(id, false, spin)));
+  return bare.get(key);
 }
 
 const cache = new Map();
