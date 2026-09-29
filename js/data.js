@@ -100,6 +100,7 @@ export const LEVELS = ['nova', 'aprendendo', 'praticando', 'conhecida', 'dominad
 
 // Frases faladas. `t` é o texto da voz sintética enquanto não houver gravação.
 export const PHRASES = [
+  { id: 'p_de', t: 'de', label: '“de” — liga letra e figura (“á… de… abelha”). Fale curtinho.' },
   { id: 'p_cade', t: 'Cadê o', label: '“Cadê o…” (antes do nome da letra)' },
   { id: 'p_comeca', t: 'Com que letra começa?', label: '“Com que letra começa?”' },
   { id: 'p_esse', t: 'Esse é o', label: '“Esse é o…” (apresenta letra nova)' },

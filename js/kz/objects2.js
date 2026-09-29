@@ -61,13 +61,24 @@ export const OBJ2 = {
     k.p('M10 100 Q100 40 190 100 Q100 160 10 100Z', k.G('white')) +
     k.c(100, 100, 40, k.G('blue')) + k.c(100, 100, 20, '#10102a') + k.c(112, 88, 9, '#ffffff') },
 
-  pulverizador: { s: 0.86, draw: (k) =>
-    k.r(0, 58, 200, 8, k.G('gray', 'h'), 4) +
-    [10, 40, 70, 130, 160, 190].map((x) => k.p(`M${x} 70 Q${x - 8} 86 ${x} 90 Q${x + 8} 86 ${x} 70Z`, '#a0e8ff')).join('') +
-    k.r(60, 70, 80, 50, k.G('white'), 22) + k.r(92, 60, 16, 12, k.G('gray')) +
-    k.p('M44 170 L44 124 L90 124 L90 90 Q90 82 98 82 L136 82 Q144 82 144 90 L144 126 L176 128 Q186 130 186 140 L186 170Z', k.G('green')) +
-    k.p('M100 92 L134 92 L134 122 L100 122Z', k.G('glass')) +
-    k.wheel(70, 162, 30) + k.wheel(166, 170, 20) },
+  // Pulverizador autopropelido: alto, rodas finas e grandes, tanque, barras abertas borrifando.
+  pulverizador: { draw: (k) =>
+    // névoa do borrifo
+    [8, 36, 64, 136, 164, 192].map((x) => k.p(`M${x} 128 L${x - 12} 188 L${x + 12} 188Z`, k.lg([['#6ac8ff', 0, 0.85], ['#a8e4ff', 1, 0.2]], 'v'))).join('') +
+    // barras (treliça)
+    k.r(0, 120, 200, 7, k.G('gray', 'h'), 3) + k.p('M0 120 L60 100 L140 100 L200 120 L194 120 L138 106 L62 106 L6 120Z', k.G('gray')) +
+    [8, 36, 64, 136, 164, 192].map((x) => k.r(x - 3, 126, 6, 6, '#3a4270', 2)).join('') +
+    // rodas traseiras (atrás) e chassi alto
+    k.r(30, 132, 14, 52, k.G('tire', 'h'), 7) + k.r(150, 132, 14, 52, k.G('tire', 'h'), 7) +
+    k.r(34, 112, 138, 16, k.G('green', 'v'), 5) +
+    // tanque
+    k.r(44, 62, 84, 50, k.G('white'), 20) + k.r(76, 54, 20, 10, k.G('gray'), 3) + k.r(52, 70, 60, 8, '#ffffff', 4, 0.6) +
+    // cabine
+    k.p('M130 112 L130 50 Q130 42 138 42 L170 42 Q178 42 180 50 L186 112Z', k.G('green')) +
+    k.p('M138 52 L170 52 L176 88 L138 88Z', k.G('glass')) + k.r(126, 38, 58, 7, k.G('green', 'v'), 3) +
+    // rodas dianteiras (na frente), finas e altas
+    k.r(52, 128, 16, 62, k.G('tire', 'h'), 8) + k.r(58, 150, 4, 18, k.G('metal'), 2) +
+    k.r(166, 128, 16, 62, k.G('tire', 'h'), 8) + k.r(172, 150, 4, 18, k.G('metal'), 2) },
 
   pato: { env: 'water', s: 0.86, draw: (k) =>
     k.p('M20 150 Q20 110 70 112 L120 116 Q150 100 150 76 Q150 40 118 40 Q88 42 88 76 Q90 96 104 110 L70 112 Q40 110 20 150 Q30 186 100 186 Q170 186 176 150 Q176 124 150 116Z', k.G('yellow')) +

@@ -5,7 +5,7 @@ import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
-export const APP_VERSION = '2026-09-25.2';
+export const APP_VERSION = '2026-09-29.1';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
@@ -41,6 +41,9 @@ function tap(el, fn) {
     fn(e);
   });
 }
+// "Á de abelha": a frase sempre cita a figura que está na tela. A âncora usa a gravação
+// inteira (d_X); as outras figuras montam nome da letra + "de" + palavra.
+const deClips = (x, w) => (!w || w.id === BY_LETTER[x].words[0].id ? [`d_${x}`] : [`n_${x}`, 'p_de', `w_${w.id}`]);
 const praise = () => ['p_bem1', 'p_bem2', 'p_bem3', 'p_bem4'][Math.floor(Math.random() * 4)];
 const letterStyle = (x) => `style="--c:${BY_LETTER[x].cor}"`;
 const ROUND_COLORS = ['#1E88E5', '#E53935', '#43A047', '#8E24AA', '#FB8C00', '#00897B'];
@@ -193,7 +196,7 @@ function round(sess) {
         const esc = $('.mini-esc');
         if (esc) esc.style.left = `calc(${(sess.round / sess.total) * 100}% * .88)`;
         await A.wait(350);
-        await A.say(praise(), `d_${x}`);
+        await A.say(praise(), ...deClips(x, r.word));
         if (!alive(id)) return;
         await A.wait(250);
         resolve(true);
@@ -379,7 +382,7 @@ function hunt() {
       b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle');
       A.say(`w_${b.dataset.id}`, `n_${L0}`);
     }));
-    A.wait(300).then(() => alive(end) && A.say(`n_${L0}`, `d_${L0}`));
+    A.wait(300).then(() => alive(end) && A.say(`n_${L0}`));
   };
 
   A.preload('p_caca', `n_${L0}`, mine.map((w) => `w_${w.id}`));

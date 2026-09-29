@@ -170,7 +170,7 @@ export async function say(...ids) {
     if (my !== token) return false;
     await playOne(id);
     if (my !== token) return false;
-    await wait(120);
+    await wait(id === 'p_de' || list[list.indexOf(id) + 1] === 'p_de' ? 30 : 120); // "á de abelha" sem pausa
   }
   return true;
 }
