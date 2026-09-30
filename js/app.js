@@ -444,7 +444,9 @@ function card(x) {
   tap($('.prev'), () => card(LETTERS[(i + LETTERS.length - 1) % LETTERS.length].L));
   tap($('.next'), () => card(LETTERS[(i + 1) % LETTERS.length].L));
   tap($('.bigletter'), () => { A.sfx.pop(); A.say(`n_${x}`, `d_${x}`); });
-  app.querySelectorAll('.picbtn').forEach((b) => tap(b, () => {
+  // Figuras rolam com o dedo: só o "click" (toca e solta sem arrastar) dispara o som.
+  app.querySelectorAll('.picbtn').forEach((b) => b.addEventListener('click', () => {
+    A.unlockAudio();
     b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle');
     A.say(...deClips(x, allWords(d)[b.dataset.j]));
   }));
