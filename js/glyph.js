@@ -55,7 +55,7 @@ export const icon = (ch, cls = 'ico') => `<img class="${cls}" src="${iconUrl(ch)
 
 // Ícones vetoriais centrados pelo centro visual.
 export const SHAPES = {
-  play: '<svg class="shape" viewBox="0 0 100 100"><path d="M38 24 Q34 22 34 27 L34 73 Q34 78 38 76 L78 53 Q82 50 78 47 Z" fill="#fff"/></svg>',
+  play: '<svg class="shape" viewBox="30 20 56 60"><path d="M38 24 Q34 22 34 27 L34 73 Q34 78 38 76 L78 53 Q82 50 78 47 Z" fill="#fff"/></svg>',
   prev: '<svg class="shape" viewBox="0 0 100 100"><path d="M60 26 L36 50 L60 74" stroke="currentColor" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   next: '<svg class="shape" viewBox="0 0 100 100"><path d="M40 26 L64 50 L40 74" stroke="currentColor" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   yes: '<svg class="shape" viewBox="0 0 100 100"><path d="M27 52 L43 68 L74 34" stroke="#fff" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
