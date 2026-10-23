@@ -17,31 +17,32 @@ export const LETTERS = [
       { id: 'coelho', w: 'coelho' }, { id: 'coruja', w: 'coruja' }, { id: 'camelo', w: 'camelo' }, { id: 'cobra', w: 'cobra' }, { id: 'caranguejo', w: 'caranguejo' }, { id: 'colheitadeira', w: 'colheitadeira' }] },
   { L: 'D', nome: 'dê',      cor: '#43A047', words: [
     { id: 'dinossauro', w: 'dinossauro', e: '🦕' }, { id: 'dado', w: 'dado', e: '🎲' }, { id: 'dente', w: 'dente', e: '🦷' } ],
-    more: [{ id: 'dragao', w: 'dragão' }, { id: 'diamante', w: 'diamante' }, { id: 'domino', w: 'dominó' }] },
+    more: [{ id: 'dragao', w: 'dragão' }, { id: 'diamante', w: 'diamante' }, { id: 'domino', w: 'dominó' }, { id: 'drone', w: 'drone' }, { id: 'disco', w: 'disco' }, { id: 'dalmata', w: 'dálmata' }] },
   { L: 'E', nome: 'é',       cor: '#8E24AA', words: [
     { id: 'elefante', w: 'elefante', e: '🐘' }, { id: 'elevador', w: 'elevador', e: '🛗' }, { id: 'ervilha', w: 'ervilha', e: '🫛' } ],
     more: [{ id: 'ema', w: 'ema' }, { id: 'enxada', w: 'enxada' }, { id: 'envelope', w: 'envelope' },
-      { id: 'empilhadeira', w: 'empilhadeira' }] },
+      { id: 'empilhadeira', w: 'empilhadeira' }, { id: 'engrenagem', w: 'engrenagem' }] },
   { L: 'F', nome: 'éfe',     cor: '#F4511E', words: [
     { id: 'foguete', w: 'foguete', e: '🚀' }, { id: 'foca', w: 'foca', e: '🦭' }, { id: 'formiga', w: 'formiga', e: '🐜' } ],
     more: [{ id: 'flor', w: 'flor' }, { id: 'fogao', w: 'fogão' }, { id: 'fantasma', w: 'fantasma' },
-      { id: 'flamingo', w: 'flamingo' }] },
+      { id: 'flamingo', w: 'flamingo' }, { id: 'fogueira', w: 'fogueira' }, { id: 'furadeira', w: 'furadeira' }] },
   { L: 'G', nome: 'gê',      cor: '#00897B', words: [
     { id: 'guindaste', w: 'guindaste', e: '🏗️' }, { id: 'gato', w: 'gato', e: '🐱' }, { id: 'galinha', w: 'galinha', e: '🐔' } ],
     more: [{ id: 'garfo', w: 'garfo' }, { id: 'gaiola', w: 'gaiola' }, { id: 'gangorra', w: 'gangorra' },
       { id: 'golfinho', w: 'golfinho' }, { id: 'gafanhoto', w: 'gafanhoto' }, { id: 'guincho', w: 'guincho' }] },
   { L: 'H', nome: 'agá',     cor: '#6D4C41', words: [
-    { id: 'helicoptero', w: 'helicóptero', e: '🚁' }, { id: 'hipopotamo', w: 'hipopótamo', e: '🦛' }, { id: 'hamburguer', w: 'hambúrguer', e: '🍔' } ] },
+    { id: 'helicoptero', w: 'helicóptero', e: '🚁' }, { id: 'hipopotamo', w: 'hipopótamo', e: '🦛' }, { id: 'hamburguer', w: 'hambúrguer', e: '🍔' } ],
+    more: [{ id: 'harpa', w: 'harpa' }, { id: 'hiena', w: 'hiena' }, { id: 'hamster', w: 'hamster' }] },
   { L: 'I', nome: 'i',       cor: '#3949AB', words: [
     { id: 'iate', w: 'iate', e: '🛥️' }, { id: 'ioio', w: 'ioiô', e: '🪀' }, { id: 'ima', w: 'ímã', e: '🧲' } ],
     more: [{ id: 'iglu', w: 'iglu' }, { id: 'ilha', w: 'ilha' }, { id: 'igreja', w: 'igreja' },
       { id: 'iguana', w: 'iguana' }] },
   { L: 'J', nome: 'jota',    cor: '#C0CA33', words: [
     { id: 'jipe', w: 'jipe', e: '🚙' }, { id: 'jacare', w: 'jacaré', e: '🐊' }, { id: 'janela', w: 'janela', e: '🪟' } ],
-    more: [{ id: 'joaninha', w: 'joaninha' }, { id: 'jaca', w: 'jaca' }, { id: 'jarra', w: 'jarra' }] },
+    more: [{ id: 'joaninha', w: 'joaninha' }, { id: 'jaca', w: 'jaca' }, { id: 'jarra', w: 'jarra' }, { id: 'jabuti', w: 'jabuti' }, { id: 'jangada', w: 'jangada' }] },
   { L: 'K', nome: 'cá',      cor: '#D81B60', words: [
     { id: 'kart', w: 'kart', e: '🏎️' }, { id: 'kiwi', w: 'kiwi', e: '🥝' }, { id: 'kimono', w: 'kimono', e: '🥋' } ],
-    more: [{ id: 'kombi', w: 'Kombi' }] },
+    more: [{ id: 'kombi', w: 'Kombi' }, { id: 'koala', w: 'koala' }, { id: 'ketchup', w: 'ketchup' }] },
   { L: 'L', nome: 'éle',     cor: '#039BE5', words: [
     { id: 'lancha', w: 'lancha', e: '🚤' }, { id: 'leao', w: 'leão', e: '🦁' }, { id: 'lapis', w: 'lápis', e: '✏️' } ],
     more: [{ id: 'lua', w: 'lua' }, { id: 'laranja', w: 'laranja' }, { id: 'lampada', w: 'lâmpada' },
@@ -52,7 +53,7 @@ export const LETTERS = [
       { id: 'morcego', w: 'morcego' }, { id: 'minhoca', w: 'minhoca' }, { id: 'motoniveladora', w: 'motoniveladora' }] },
   { L: 'N', nome: 'êne',     cor: '#5E35B1', words: [
     { id: 'navio', w: 'navio', e: '🚢' }, { id: 'nuvem', w: 'nuvem', e: '☁️' }, { id: 'ninho', w: 'ninho', e: '🪺' } ],
-    more: [{ id: 'nariz', w: 'nariz' }, { id: 'novelo', w: 'novelo' }, { id: 'nave', w: 'nave' }] },
+    more: [{ id: 'nariz', w: 'nariz' }, { id: 'novelo', w: 'novelo' }, { id: 'nave', w: 'nave' }, { id: 'noz', w: 'noz' }, { id: 'narval', w: 'narval' }] },
   { L: 'O', nome: 'ó',       cor: '#FB8C00', words: [
     { id: 'onibus', w: 'ônibus', e: '🚌' }, { id: 'ovo', w: 'ovo', e: '🥚' }, { id: 'olho', w: 'olho', e: '👁️' } ],
     more: [{ id: 'oculos', w: 'óculos' }, { id: 'ovelha', w: 'ovelha' }, { id: 'osso', w: 'osso' },
@@ -62,7 +63,8 @@ export const LETTERS = [
     more: [{ id: 'peixe', w: 'peixe' }, { id: 'porco', w: 'porco' }, { id: 'pipa', w: 'pipa' },
       { id: 'pinguim', w: 'pinguim' }, { id: 'pavao', w: 'pavão' }, { id: 'polvo', w: 'polvo' }, { id: 'panda', w: 'panda' }, { id: 'pacarregadeira', w: 'pá-carregadeira' }, { id: 'patinete', w: 'patinete' }] },
   { L: 'Q', nome: 'quê',     cor: '#F9A825', words: [
-    { id: 'queijo', w: 'queijo', e: '🧀' }, { id: 'quebracabeca', w: 'quebra-cabeça', e: '🧩' }, { id: 'quadro', w: 'quadro', e: '🖼️' } ] },
+    { id: 'queijo', w: 'queijo', e: '🧀' }, { id: 'quebracabeca', w: 'quebra-cabeça', e: '🧩' }, { id: 'quadro', w: 'quadro', e: '🖼️' } ],
+    more: [{ id: 'quati', w: 'quati' }, { id: 'quiabo', w: 'quiabo' }, { id: 'quindim', w: 'quindim' }] },
   { L: 'R', nome: 'érre',    cor: '#1E88E5', words: [
     { id: 'retroescavadeira', w: 'retroescavadeira', svg: 'retro' }, { id: 'rato', w: 'rato', e: '🐭' }, { id: 'roda', w: 'roda', e: '🛞' } ],
     more: [{ id: 'relogio', w: 'relógio' }, { id: 'rede', w: 'rede' }, { id: 'raquete', w: 'raquete' },
@@ -70,7 +72,7 @@ export const LETTERS = [
   { L: 'S', nome: 'ésse',    cor: '#00ACC1', words: [
     { id: 'submarino', w: 'submarino', svg: 'submarino' }, { id: 'sapo', w: 'sapo', e: '🐸' }, { id: 'serrote', w: 'serrote', e: '🪚' } ],
     more: [{ id: 'sol', w: 'sol' }, { id: 'sorvete', w: 'sorvete' }, { id: 'sapato', w: 'sapato' },
-      { id: 'suricato', w: 'suricato' }] },
+      { id: 'suricato', w: 'suricato' }, { id: 'sino', w: 'sino' }, { id: 'sofa', w: 'sofá' }, { id: 'semaforo', w: 'semáforo' }, { id: 'sanduiche', w: 'sanduíche' }, { id: 'sabonete', w: 'sabonete' }] },
   { L: 'T', nome: 'tê',      cor: '#43A047', words: [
     { id: 'trator', w: 'trator', e: '🚜' }, { id: 'tartaruga', w: 'tartaruga', e: '🐢' }, { id: 'tesoura', w: 'tesoura', e: '✂️' } ],
     more: [{ id: 'tigre', w: 'tigre' }, { id: 'trem', w: 'trem' }, { id: 'telefone', w: 'telefone' },
@@ -81,9 +83,10 @@ export const LETTERS = [
   { L: 'V', nome: 'vê',      cor: '#8E24AA', words: [
     { id: 'veleiro', w: 'veleiro', e: '⛵' }, { id: 'vaca', w: 'vaca', e: '🐮' }, { id: 'vassoura', w: 'vassoura', e: '🧹' } ],
     more: [{ id: 'violao', w: 'violão' }, { id: 'vulcao', w: 'vulcão' }, { id: 'vela', w: 'vela' },
-      { id: 'veado', w: 'veado' }, { id: 'vagalume', w: 'vaga-lume' }] },
+      { id: 'veado', w: 'veado' }, { id: 'vagalume', w: 'vaga-lume' }, { id: 'ventilador', w: 'ventilador' }] },
   { L: 'W', nome: 'dáblio',  cor: '#546E7A', words: [
-    { id: 'waffle', w: 'waffle', e: '🧇' }, { id: 'windsurf', w: 'windsurf', e: '🏄' } ] },
+    { id: 'waffle', w: 'waffle', e: '🧇' }, { id: 'windsurf', w: 'windsurf', e: '🏄' } ],
+    more: [{ id: 'walkietalkie', w: 'walkie-talkie' }] },
   { L: 'X', nome: 'xis',     cor: '#F4511E', words: [
     { id: 'xicara', w: 'xícara', e: '☕' }, { id: 'xerife', w: 'xerife', e: '🤠' }, { id: 'xadrez', w: 'xadrez', e: '♟️' } ],
     more: [{ id: 'xampu', w: 'xampu' }, { id: 'xilofone', w: 'xilofone' }] },

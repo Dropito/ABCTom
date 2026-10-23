@@ -5,7 +5,7 @@ import * as A from './audio.js';
 import * as S from './store.js';
 import { glyph, icon, SHAPES } from './glyph.js';
 
-export const APP_VERSION = '2026-09-29.4';
+export const APP_VERSION = '2026-10-23.1';
 const app = document.getElementById('app');
 let screen = 0; // muda a cada tela; awaits antigos checam e desistem
 const alive = (id) => id === screen;
@@ -43,7 +43,15 @@ function tap(el, fn) {
 }
 // "Á de abelha": a frase sempre cita a figura que está na tela. A âncora usa a gravação
 // inteira (d_X); as outras figuras montam nome da letra + "de" + palavra.
-const deClips = (x, w) => (!w || w.id === BY_LETTER[x].words[0].id ? [`d_${x}`] : [`n_${x}`, 'p_de', `w_${w.id}`]);
+// Sem figura definida, sorteia uma do repertório (sem repetir a última dita daquela letra).
+const lastPick = {};
+function randWord(x, pool = allWords(BY_LETTER[x])) {
+  const opts = pool.length > 1 ? pool.filter((w) => w.id !== lastPick[x]) : pool;
+  const w = opts[Math.floor(Math.random() * opts.length)];
+  lastPick[x] = w.id;
+  return w;
+}
+const deClips = (x, w) => ((w ||= randWord(x)).id === BY_LETTER[x].words[0].id ? [`d_${x}`] : [`n_${x}`, 'p_de', `w_${w.id}`]);
 const praise = () => ['p_bem1', 'p_bem2', 'p_bem3', 'p_bem4'][Math.floor(Math.random() * 4)];
 const letterStyle = (x) => `style="--c:${BY_LETTER[x].cor}"`;
 const ROUND_COLORS = ['#1E88E5', '#E53935', '#43A047', '#8E24AA', '#FB8C00', '#00897B'];
@@ -164,7 +172,12 @@ function intro(x) {
       <button class="btn go hidden" aria-label="Continuar">${SHAPES.play}</button>
     `, 'intro');
     tap($('.home-btn'), () => { resolve(false); home(); });
-    tap($('.bigletter'), () => { A.sfx.pop(); A.say(`n_${x}`, `d_${x}`); });
+    tap($('.bigletter'), () => {
+      A.sfx.pop();
+      const w = randWord(x, d.words), b = app.querySelectorAll('.picbtn')[d.words.indexOf(w)];
+      b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle');
+      A.say(...deClips(x, w));
+    });
     app.querySelectorAll('.picbtn').forEach((b) => tap(b, () => {
       b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle');
       A.say(`w_${d.words[b.dataset.i].id}`);
@@ -207,7 +220,9 @@ function round(sess) {
         const esc = $('.mini-esc');
         if (esc) esc.style.left = `calc(${(sess.round / sess.total) * 100}% * .88)`;
         await A.wait(350);
-        await A.say(praise(), ...deClips(x, r.word));
+        const w = r.word || randWord(x);
+        if (!r.word) { $('.prompt').className = 'prompt picprompt'; $('.prompt').innerHTML = pic(w, 'big'); fitArt(); }
+        await A.say(praise(), ...deClips(x, w));
         if (!alive(id)) return;
         await A.wait(250);
         resolve(true);
@@ -245,10 +260,10 @@ function dadRound(sess) {
       if (ok) {
         confetti(50, 40);
         A.sfx.yay();
-        await A.say(praise(), `d_${x}`);
+        await A.say(praise(), ...deClips(x));
       } else {
         $('.bigletter').classList.add('wiggle');
-        await A.say(`n_${x}`, `d_${x}`);
+        await A.say(...deClips(x));
       }
       if (!alive(id)) return;
       await A.wait(300);
@@ -443,14 +458,21 @@ function card(x) {
   tap($('.back-btn'), explore);
   tap($('.prev'), () => card(LETTERS[(i + LETTERS.length - 1) % LETTERS.length].L));
   tap($('.next'), () => card(LETTERS[(i + 1) % LETTERS.length].L));
-  tap($('.bigletter'), () => { A.sfx.pop(); A.say(`n_${x}`, `d_${x}`); });
+  const words = allWords(d);
+  const sayRandom = () => {
+    const w = randWord(x, words), b = app.querySelectorAll('.picbtn')[words.indexOf(w)];
+    b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle');
+    A.say(...deClips(x, w));
+  };
+  tap($('.bigletter'), () => { A.sfx.pop(); sayRandom(); });
   // Figuras rolam com o dedo: só o "click" (toca e solta sem arrastar) dispara o som.
   app.querySelectorAll('.picbtn').forEach((b) => b.addEventListener('click', () => {
     A.unlockAudio();
     b.classList.remove('wiggle'); void b.offsetWidth; b.classList.add('wiggle');
     A.say(...deClips(x, allWords(d)[b.dataset.j]));
   }));
-  A.wait(200).then(() => alive(id) && A.say(`n_${x}`, `d_${x}`));
+  A.wait(200).then(() => alive(id) && sayRandom());
 }
 
 // ---------------- Área do papai ----------------
