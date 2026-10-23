@@ -4,20 +4,29 @@ import { LETTERS, ORDER, SEED, CONFUSABLE, BY_LETTER, allWords } from './data.js
 const KEY = 'abc-do-tom:v1';
 const today = () => new Date().toISOString().slice(0, 10);
 
-function fresh() {
+// Subir este número apaga o progresso salvo no aparelho uma única vez (recomeço do zero, sem SEED).
+const EPOCH = 2;
+
+function fresh(seed = true) {
   const letters = {};
   for (const { L } of LETTERS) {
-    const level = SEED[L] || 0;
+    const level = seed ? SEED[L] || 0 : 0;
     letters[L] = { level, xp: 0, miss: 0, seen: 0, hits: 0, last: 0, upDay: '', garage: level >= 3 };
   }
-  return { letters, settings: { rounds: 10, newPerDay: 2 }, sessions: 0, day: today(), newToday: 0, tick: 0 };
+  return { epoch: EPOCH, letters, settings: { rounds: 10, newPerDay: 2 }, sessions: 0, day: today(), newToday: 0, tick: 0 };
 }
 
 export let state = load();
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && s.letters) return s;
+    if (s && s.letters) {
+      if (s.epoch === EPOCH) return s;
+      const z = fresh(false);
+      if (s.settings) z.settings = s.settings;
+      localStorage.setItem(KEY, JSON.stringify(z));
+      return z;
+    }
   } catch (e) { /* noop */ }
   return fresh();
 }
